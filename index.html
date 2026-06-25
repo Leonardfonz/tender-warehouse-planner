@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tender &amp; Warehouse Planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .grid-cell { transition: background-color 0.15s ease; }
+    .grid-cell:hover { filter: brightness(0.95); }
+    .dragging { opacity: 0.7; cursor: grabbing; }
+    .drop-zone.active { outline: 3px dashed #6366f1; outline-offset: -2px; }
+    .module-card { transition: box-shadow 0.2s ease; }
+    .module-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
+    .zone-legend { transition: all 0.2s ease; }
+    .zone-legend:hover { transform: translateY(-1px); }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Tender &amp; Warehouse Planner</h1>
+        <p class="text-sm text-gray-500">Logistics proposal builder — all data stays in your browser</p>
+      </div>
+      <button onclick="exportExcel()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Export .xlsx
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+    <!-- MODULE A: Tender Initialization & Volume Input -->
+    <section class="module-card bg-white rounded-xl border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-1">Tender Setup &amp; Volume Baseline</h2>
+      <p class="text-sm text-gray-500 mb-5">Define the tender scope and volume assumptions.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Tender Name</label><input type="text" id="tenderName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" placeholder="Q4 Fulfillment RFP"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Client</label><input type="text" id="clientName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" placeholder="Brand name"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Operational Days / Year</label><input type="number" id="opDays" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="250" min="1"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Contract Duration (years)</label><input type="number" id="contractYears" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="3" min="1" step="0.5"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Inbound Volume / Year</label><input type="number" id="inboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="500000" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Outbound Volume / Year</label><input type="number" id="outboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="450000" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">SKU Count</label><input type="number" id="skuCount" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="1200" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Avg Units / Pallet</label><input type="number" id="unitsPerPallet" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="60" min="1"></div>
+      </div>
+    </section>
+
+    <!-- MODULE B: Drag-and-Drop Warehouse Space Visualizer -->
+    <section class="module-card bg-white rounded-xl border border-gray-200 p-6">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 mb-1">Warehouse Floorplan Visualizer</h2>
+          <p class="text-sm text-gray-500">Drag zone blocks onto the grid. Right-click to remove. Each cell = 10 m&sup2;.
+             <span class="font-medium">Total: <span id="totalSqm" class="text-indigo-600">0</span> m&sup2;</span></p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="resetGrid()" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Reset Grid</button>
+        </div>
+      </div>
+
+      <!-- Zone palette -->
+      <div class="flex flex-wrap gap-2 mb-4" id="zonePalette"></div>
+
+      <!-- Grid canvas -->
+      <div class="overflow-auto border border-gray-200 rounded-lg bg-gray-100 p-4">
+        <div class="inline-grid gap-0.5" id="warehouseGrid" style="grid-template-columns: repeat(20, 36px);"></div>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-6 text-xs text-gray-500" id="zoneSummary"></div>
+    </section>
+
+    <!-- MODULE C: Activity & Overhead Costing Engine -->
+    <section class="module-card bg-white rounded-xl border border-gray-200 p-6">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 mb-1">Activity-Based Costing</h2>
+          <p class="text-sm text-gray-500">Define logistics activities with volume, productivity, and labor rates.</p>
+        </div>
+        <button onclick="addActivity()" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">+ Add Activity</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" id="activityTable">
+          <thead>
+            <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+              <th class="pb-2 pr-3">Activity</th>
+              <th class="pb-2 pr-3 w-28">Volume / Year</th>
+              <th class="pb-2 pr-3 w-24">UPH</th>
+              <th class="pb-2 pr-3 w-28">Labor &euro;/hr</th>
+              <th class="pb-2 pr-3 w-20">Margin %</th>
+              <th class="pb-2 pr-3 w-28">Headcount</th>
+              <th class="pb-2 pr-3 w-28">Labor Cost</th>
+              <th class="pb-2 pr-3 w-28">Billed Rev</th>
+              <th class="pb-2 w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="activityBody"></tbody>
+        </table>
+      </div>
+
+      <h3 class="text-md font-semibold text-gray-900 mt-6 mb-3">Fixed Overheads</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="overheadsSection">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Rent / m&sup2; / month (&euro;)</label><input type="number" id="rentPerSqm" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="12.5" min="0" step="0.1"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">MHE Leasing / month (&euro;)</label><input type="number" id="mheLeasing" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="3500" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">IT &amp; WMS / month (&euro;)</label><input type="number" id="itWms" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="2800" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Packaging &amp; Consumables / year (&euro;)</label><input type="number" id="packaging" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="45000" min="0"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Utilities / month (&euro;)</label><input type="number" id="utilities" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="1800" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Security / month (&euro;)</label><input type="number" id="security" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="2200" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Insurance / year (&euro;)</label><input type="number" id="insurance" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="15000" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Other Fixed / year (&euro;)</label><input type="number" id="otherFixed" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="0" min="0"></div>
+      </div>
+    </section>
+
+    <!-- MODULE D: P&L Dashboard -->
+    <section class="module-card bg-white rounded-xl border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Profit &amp; Loss Summary</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-gray-50 rounded-lg p-4 text-center"><p class="text-xs text-gray-500 mb-1">Total Labor Cost</p><p class="text-2xl font-bold text-gray-900" id="plLaborCost">&euro;0</p></div>
+        <div class="bg-gray-50 rounded-lg p-4 text-center"><p class="text-xs text-gray-500 mb-1">Total Overheads</p><p class="text-2xl font-bold text-gray-900" id="plOverheads">&euro;0</p></div>
+        <div class="bg-emerald-50 rounded-lg p-4 text-center"><p class="text-xs text-emerald-700 mb-1">Target Revenue</p><p class="text-2xl font-bold text-emerald-700" id="plRevenue">&euro;0</p></div>
+        <div class="bg-indigo-50 rounded-lg p-4 text-center"><p class="text-xs text-indigo-700 mb-1">Projected Profit</p><p class="text-2xl font-bold text-indigo-700" id="plProfit">&euro;0</p><p class="text-xs text-indigo-500 mt-1" id="plProfitPct">(0.0%)</p></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="max-w-7xl mx-auto px-6 pb-8 text-center text-xs text-gray-400">
+    All data processed locally in your browser. Nothing is ever uploaded.
+  </footer>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const GRID_COLS = 20, GRID_ROWS = 12, CELL_SQM = 10;
+
+const ZONE_TYPES = [
+  { id: 'racking',    name: 'Standard Racking', color: '#dbeafe', border: '#93c5fd', icon: '📦' },
+  { id: 'bulk',      name: 'Bulk Storage',     color: '#fef3c7', border: '#fbbf24', icon: '🏗️' },
+  { id: 'cage',      name: 'High-Value Cage',  color: '#fce7f3', border: '#f472b6', icon: '🔒' },
+  { id: 'vas',       name: 'VAS Area',         color: '#d1fae5', border: '#6ee7b7', icon: '🔧' },
+  { id: 'inbound',   name: 'Inbound Staging',  color: '#ede9fe', border: '#a78bfa', icon: '📥' },
+  { id: 'outbound',  name: 'Outbound Staging', color: '#e0e7ff', border: '#818cf8', icon: '📤' },
+  { id: 'office',    name: 'Office / Amenities', color: '#f3f4f6', border: '#9ca3af', icon: '🪑' },
+];
+
+let grid = Array(GRID_ROWS * GRID_COLS).fill(null);
+let selectedZone = ZONE_TYPES[0].id;
+
+// Activities
+let activities = [
+  { id: 1, name: 'Receiving / Putaway', volume: 500000, uph: 45, laborRate: 16.5, margin: 12 },
+  { id: 2, name: 'Pick & Pack (B2C)', volume: 350000, uph: 25, laborRate: 16.5, margin: 20 },
+  { id: 3, name: 'QA Inspection', volume: 75000, uph: 18, laborRate: 18.0, margin: 25 },
+  { id: 4, name: 'Ticketing / Labeling', volume: 60000, uph: 30, laborRate: 15.5, margin: 18 },
+];
+let activityNextId = 5;
+
+// ============================================================
+// WAREHOUSE GRID
+// ============================================================
+function buildPalette() {
+  const palette = document.getElementById('zonePalette');
+  palette.innerHTML = ZONE_TYPES.map(z =>
+    `<button onclick="selectZone('${z.id}')" data-zone="${z.id}"
+       class="zone-legend px-3 py-2 rounded-lg border-2 text-xs font-medium cursor-pointer flex items-center gap-1.5"
+       style="background:${z.color};border-color:${z.id===selectedZone?'#4f46e5':z.border}">
+       <span>${z.icon}</span> ${z.name}
+    </button>`
+  ).join('');
+}
+
+function selectZone(id) {
+  selectedZone = id;
+  document.querySelectorAll('#zonePalette button').forEach(b => {
+    const z = ZONE_TYPES.find(z => z.id === b.dataset.zone);
+    b.style.borderColor = b.dataset.zone === id ? '#4f46e5' : z.border;
+  });
+}
+
+function buildGrid() {
+  const gridEl = document.getElementById('warehouseGrid');
+  gridEl.innerHTML = '';
+  for (let i = 0; i < GRID_ROWS * GRID_COLS; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell w-9 h-9 rounded cursor-pointer border border-gray-200';
+    cell.dataset.index = i;
+    cell.title = `Cell ${i} — click to place ${selectedZone}`;
+    if (grid[i]) {
+      const z = ZONE_TYPES.find(z => z.id === grid[i]);
+      cell.style.background = z.color;
+      cell.style.borderColor = z.border;
+      cell.textContent = z.icon;
+      cell.style.fontSize = '11px';
+      cell.style.display = 'flex';
+      cell.style.alignItems = 'center';
+      cell.style.justifyContent = 'center';
+    }
+    cell.addEventListener('click', () => placeZone(i));
+    cell.addEventListener('contextmenu', (e) => { e.preventDefault(); removeZone(i); });
+    cell.addEventListener('dragover', (e) => { e.preventDefault(); cell.classList.add('drop-zone', 'active'); });
+    cell.addEventListener('dragleave', () => cell.classList.remove('drop-zone', 'active'));
+    cell.addEventListener('drop', (e) => { e.preventDefault(); cell.classList.remove('drop-zone', 'active'); placeZone(i); });
+    cell.draggable = true;
+    cell.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', i.toString());
+      cell.classList.add('dragging');
+    });
+    cell.addEventListener('dragend', () => cell.classList.remove('dragging'));
+    gridEl.appendChild(cell);
+  }
+  updateZoneSummary();
+}
+
+function placeZone(index) {
+  grid[index] = selectedZone;
+  buildGrid();
+}
+
+function removeZone(index) {
+  grid[index] = null;
+  buildGrid();
+}
+
+function resetGrid() {
+  grid = Array(GRID_ROWS * GRID_COLS).fill(null);
+  buildGrid();
+}
+
+function updateZoneSummary() {
+  const counts = {};
+  ZONE_TYPES.forEach(z => counts[z.id] = 0);
+  grid.forEach(cell => { if (cell) counts[cell] = (counts[cell] || 0) + 1; });
+  const totalCells = Object.values(counts).reduce((a, b) => a + b, 0);
+  document.getElementById('totalSqm').textContent = (totalCells * CELL_SQM).toLocaleString();
+
+  const summaryEl = document.getElementById('zoneSummary');
+  summaryEl.innerHTML = ZONE_TYPES.filter(z => counts[z.id] > 0).map(z =>
+    `<span style="display:inline-flex;align-items:center;gap:4px">
+       <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${z.color};border:1px solid ${z.border}"></span>
+       ${z.name}: ${counts[z.id] * CELL_SQM} m&sup2;
+    </span>`
+  ).join('');
+}
+
+// ============================================================
+// ACTIVITIES
+// ============================================================
+function buildActivityTable() {
+  const tbody = document.getElementById('activityBody');
+  tbody.innerHTML = activities.map(a => {
+    const hoursNeeded = a.uph > 0 ? a.volume / a.uph : 0;
+    const opDays = +document.getElementById('opDays').value || 250;
+    const headcount = opDays > 0 ? Math.ceil(hoursNeeded / (opDays * 8)) : 0;
+    const laborCost = hoursNeeded * a.laborRate;
+    const billedRev = laborCost * (1 + a.margin / 100);
+    return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+      <td class="py-2 pr-3"><input type="text" value="${a.name}" onchange="updateActivity(${a.id},'name',this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none"></td>
+      <td class="py-2 pr-3"><input type="number" value="${a.volume}" onchange="updateActivity(${a.id},'volume',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0"></td>
+      <td class="py-2 pr-3"><input type="number" value="${a.uph}" onchange="updateActivity(${a.id},'uph',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
+      <td class="py-2 pr-3"><input type="number" value="${a.laborRate}" onchange="updateActivity(${a.id},'laborRate',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0" step="0.5"></td>
+      <td class="py-2 pr-3"><input type="number" value="${a.margin}" onchange="updateActivity(${a.id},'margin',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0" max="100" step="0.5"></td>
+      <td class="py-2 pr-3 text-sm font-medium text-gray-700">${headcount.toLocaleString()}</td>
+      <td class="py-2 pr-3 text-sm font-medium text-gray-700">&euro;${Math.round(laborCost).toLocaleString()}</td>
+      <td class="py-2 pr-3 text-sm font-medium text-emerald-700">&euro;${Math.round(billedRev).toLocaleString()}</td>
+      <td class="py-2"><button onclick="removeActivity(${a.id})" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button></td>
+    </tr>`;
+  }).join('');
+  updatePL();
+}
+
+function addActivity() {
+  activities.push({ id: activityNextId++, name: 'New Activity', volume: 0, uph: 1, laborRate: 16.5, margin: 15 });
+  buildActivityTable();
+}
+
+function removeActivity(id) {
+  activities = activities.filter(a => a.id !== id);
+  buildActivityTable();
+}
+
+function updateActivity(id, field, value) {
+  const a = activities.find(a => a.id === id);
+  if (a) a[field] = value;
+  buildActivityTable();
+}
+
+// ============================================================
+// P&L
+// ============================================================
+function updatePL() {
+  const opDays = +document.getElementById('opDays').value || 250;
+
+  // Labor costs
+  let totalLaborCost = 0;
+  let totalBilledRev = 0;
+  activities.forEach(a => {
+    const hours = a.uph > 0 ? a.volume / a.uph : 0;
+    const cost = hours * a.laborRate;
+    totalLaborCost += cost;
+    totalBilledRev += cost * (1 + a.margin / 100);
+  });
+
+  // Overheads
+  const totalCells = grid.filter(Boolean).length;
+  const totalSqm = totalCells * CELL_SQM;
+  const rent = (+document.getElementById('rentPerSqm').value || 0) * totalSqm * 12;
+  const mhe = (+document.getElementById('mheLeasing').value || 0) * 12;
+  const it = (+document.getElementById('itWms').value || 0) * 12;
+  const pkg = +document.getElementById('packaging').value || 0;
+  const util = (+document.getElementById('utilities').value || 0) * 12;
+  const sec = (+document.getElementById('security').value || 0) * 12;
+  const ins = +document.getElementById('insurance').value || 0;
+  const other = +document.getElementById('otherFixed').value || 0;
+  const totalOverheads = rent + mhe + it + pkg + util + sec + ins + other;
+
+  const totalCost = totalLaborCost + totalOverheads;
+  const profit = totalBilledRev - totalCost;
+  const profitPct = totalBilledRev > 0 ? (profit / totalBilledRev * 100) : 0;
+
+  document.getElementById('plLaborCost').textContent = `\u20ac${Math.round(totalLaborCost).toLocaleString()}`;
+  document.getElementById('plOverheads').textContent = `\u20ac${Math.round(totalOverheads).toLocaleString()}`;
+  document.getElementById('plRevenue').textContent = `\u20ac${Math.round(totalBilledRev).toLocaleString()}`;
+  document.getElementById('plProfit').textContent = `\u20ac${Math.round(profit).toLocaleString()}`;
+  document.getElementById('plProfitPct').textContent = `(${profitPct.toFixed(1)}%)`;
+}
+
+// Recalculate on any input change
+document.addEventListener('input', (e) => {
+  if (e.target.closest('#warehouseGrid')) return;
+  buildActivityTable();
+  updateZoneSummary();
+  updatePL();
+});
+
+// ============================================================
+// EXPORT EXCEL
+// ============================================================
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // Tab 1: Tender Setup
+  const setup = {
+    'Tender Name': document.getElementById('tenderName').value || 'Untitled',
+    'Client': document.getElementById('clientName').value || '',
+    'Operational Days/Year': +document.getElementById('opDays').value || 250,
+    'Contract Duration (years)': +document.getElementById('contractYears').value || 3,
+    'Inbound Volume/Year': +document.getElementById('inboundVol').value || 0,
+    'Outbound Volume/Year': +document.getElementById('outboundVol').value || 0,
+    'SKU Count': +document.getElementById('skuCount').value || 0,
+    'Avg Units/Pallet': +document.getElementById('unitsPerPallet').value || 0,
+  };
+  const wsSetup = XLSX.utils.json_to_sheet([setup]);
+  XLSX.utils.book_append_sheet(wb, wsSetup, 'Tender Setup');
+
+  // Tab 2: Floorplan
+  const totalCells = grid.filter(Boolean).length;
+  const zoneCounts = {};
+  ZONE_TYPES.forEach(z => zoneCounts[z.name] = 0);
+  grid.forEach(cell => { if (cell) { const z = ZONE_TYPES.find(z => z.id === cell); zoneCounts[z.name] = (zoneCounts[z.name] || 0) + 1; }});
+  const floorplanData = Object.entries(zoneCounts).filter(([,v]) => v > 0).map(([k,v]) => ({ Zone: k, 'Cells': v, 'Sqm': v * CELL_SQM }));
+  floorplanData.push({ Zone: 'TOTAL', Cells: totalCells, Sqm: totalCells * CELL_SQM });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(floorplanData), 'Floorplan');
+
+  // Tab 3: Activity Costing
+  const opDays = +document.getElementById('opDays').value || 250;
+  const actData = activities.map(a => {
+    const hours = a.uph > 0 ? a.volume / a.uph : 0;
+    const hc = opDays > 0 ? Math.ceil(hours / (opDays * 8)) : 0;
+    const cost = hours * a.laborRate;
+    const rev = cost * (1 + a.margin / 100);
+    return {
+      Activity: a.name, 'Volume/Year': a.volume, UPH: a.uph, 'Labor Rate': a.laborRate,
+      'Margin %': a.margin, Headcount: hc, 'Labor Cost': Math.round(cost), 'Billed Revenue': Math.round(rev)
+    };
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(actData), 'Activity Costing');
+
+  // Tab 4: Overheads
+  const ovhData = [
+    { Item: 'Rent', Monthly: +document.getElementById('rentPerSqm').value || 0, Annual: ((+document.getElementById('rentPerSqm').value || 0) * totalCells * CELL_SQM * 12) },
+    { Item: 'MHE Leasing', Monthly: +document.getElementById('mheLeasing').value || 0, Annual: (+document.getElementById('mheLeasing').value || 0) * 12 },
+    { Item: 'IT & WMS', Monthly: +document.getElementById('itWms').value || 0, Annual: (+document.getElementById('itWms').value || 0) * 12 },
+    { Item: 'Packaging', Monthly: '', Annual: +document.getElementById('packaging').value || 0 },
+    { Item: 'Utilities', Monthly: +document.getElementById('utilities').value || 0, Annual: (+document.getElementById('utilities').value || 0) * 12 },
+    { Item: 'Security', Monthly: +document.getElementById('security').value || 0, Annual: (+document.getElementById('security').value || 0) * 12 },
+    { Item: 'Insurance', Monthly: '', Annual: +document.getElementById('insurance').value || 0 },
+    { Item: 'Other', Monthly: '', Annual: +document.getElementById('otherFixed').value || 0 },
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ovhData), 'Overheads');
+
+  // Tab 5: P&L Summary
+  const totalLaborCost = actData.reduce((s, a) => s + a['Labor Cost'], 0);
+  const totalRevenue = actData.reduce((s, a) => s + a['Billed Revenue'], 0);
+  const totalOverheads = ovhData.reduce((s, o) => s + o.Annual, 0);
+  const totalCost = totalLaborCost + totalOverheads;
+  const profit = totalRevenue - totalCost;
+  const plData = [
+    { Item: 'Total Labor Cost', Amount: Math.round(totalLaborCost) },
+    { Item: 'Total Overheads', Amount: Math.round(totalOverheads) },
+    { Item: 'Total Cost', Amount: Math.round(totalCost) },
+    { Item: 'Target Revenue', Amount: Math.round(totalRevenue) },
+    { Item: 'Projected Profit', Amount: Math.round(profit) },
+    { Item: 'Profit Margin', Amount: totalRevenue > 0 ? (profit / totalRevenue * 100).toFixed(1) + '%' : '0.0%' },
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(plData), 'P&L Summary');
+
+  const name = document.getElementById('tenderName').value || 'tender-proposal';
+  XLSX.writeFile(wb, `${name.replace(/[^a-z0-9]/gi, '-')}.xlsx`);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+buildPalette();
+buildGrid();
+buildActivityTable();
+
+// Close palette persistence on grid interaction
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#warehouseGrid')) {
+    // Painting mode: keep placing selected zone on click
+  }
+});
+</script>
+</body>
+</html>
