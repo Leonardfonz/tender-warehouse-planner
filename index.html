@@ -20,6 +20,9 @@
     input[type="number"] { -moz-appearance: textfield; }
     .zone-legend { transition: all 0.2s ease; }
     .zone-legend:hover { transform: translateY(-1px); }
+    .dirty { border-color: #f59e0b !important; background: #fffbeb !important; }
+    @keyframes pulse-border { 0%,100% { border-color: #f59e0b; } 50% { border-color: #fbbf24; } }
+    .pulse { animation: pulse-border 1.2s ease-in-out infinite; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
@@ -29,12 +32,18 @@
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold text-gray-900 tracking-tight">Tender &amp; Warehouse Planner</h1>
-        <p class="text-sm text-gray-500">Logistics proposal builder — all data stays in your browser</p>
+        <p class="text-sm text-gray-500">Hong Kong logistics proposal builder — all data stays in your browser</p>
       </div>
-      <button onclick="exportExcel()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        Export .xlsx
-      </button>
+      <div class="flex items-center gap-3">
+        <button onclick="updateAll()" id="btnUpdate" class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 active:bg-amber-700 transition-colors shadow-sm pulse">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Update All Calculations
+        </button>
+        <button onclick="exportExcel()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Export .xlsx
+        </button>
+      </div>
     </div>
   </header>
 
@@ -43,18 +52,24 @@
     <!-- MODULE A: Tender Initialization & Volume Input -->
     <section class="module-card bg-white rounded-xl border border-gray-200 p-6">
       <h2 class="text-lg font-semibold text-gray-900 mb-1">Tender Setup &amp; Volume Baseline</h2>
-      <p class="text-sm text-gray-500 mb-5">Define the tender scope and volume assumptions.</p>
+      <p class="text-sm text-gray-500 mb-5">Define the tender scope, volume assumptions, and carton specifications.</p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Tender Name</label><input type="text" id="tenderName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" placeholder="Q4 Fulfillment RFP"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Client</label><input type="text" id="clientName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" placeholder="Brand name"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Operational Days / Year</label><input type="number" id="opDays" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="250" min="1"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Contract Duration (years)</label><input type="number" id="contractYears" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="3" min="1" step="0.5"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Tender Name</label><input type="text" id="tenderName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" placeholder="Q4 Fulfillment RFP" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Client</label><input type="text" id="clientName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" placeholder="Brand name" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Operational Days / Year</label><input type="number" id="opDays" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="250" min="1" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Contract Duration (years)</label><input type="number" id="contractYears" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="3" min="1" step="0.5" oninput="markDirty()"></div>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Inbound Volume / Year</label><input type="number" id="inboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="500000" min="0"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Outbound Volume / Year</label><input type="number" id="outboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="450000" min="0"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">SKU Count</label><input type="number" id="skuCount" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="1200" min="0"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Avg Units / Pallet</label><input type="number" id="unitsPerPallet" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="60" min="1"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Inbound Volume / Year</label><input type="number" id="inboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="500000" min="0" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Outbound Volume / Year</label><input type="number" id="outboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="450000" min="0" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">SKU Count</label><input type="number" id="skuCount" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="1200" min="0" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Pcs per Carton</label><input type="number" id="pcsPerCarton" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="12" min="1" oninput="markDirty()"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Carton Length (in)</label><input type="number" id="cartonL" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="24" min="1" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Carton Width (in)</label><input type="number" id="cartonW" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="18" min="1" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Carton Height (in)</label><input type="number" id="cartonH" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="12" min="1" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Avg Units / Pallet</label><input type="number" id="unitsPerPallet" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="60" min="1" oninput="markDirty()"></div>
       </div>
     </section>
 
@@ -63,12 +78,25 @@
       <div class="flex items-start justify-between mb-4">
         <div>
           <h2 class="text-lg font-semibold text-gray-900 mb-1">Warehouse Floorplan Visualizer</h2>
-          <p class="text-sm text-gray-500">Drag zone blocks onto the grid. Right-click to remove. Each cell = 10 m&sup2;.
-             <span class="font-medium">Total: <span id="totalSqm" class="text-indigo-600">0</span> m&sup2;</span></p>
+          <p class="text-sm text-gray-500">Click to paint zones. Right-click to remove. Each cell = <span class="font-medium" id="cellSqftLabel">80</span> sqft.
+             <span class="font-medium">Total used: <span id="totalSqft" class="text-indigo-600">0</span> sqft</span></p>
         </div>
         <div class="flex gap-2">
           <button onclick="resetGrid()" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Reset Grid</button>
         </div>
+      </div>
+
+      <!-- Shelf & Corridor Configuration -->
+      <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Shelf &amp; Corridor Configuration</h3>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Width (ft)</label><input type="number" id="shelfW" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="8" min="1" step="0.5" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Depth (ft)</label><input type="number" id="shelfD" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="4" min="1" step="0.5" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Height (ft)</label><input type="number" id="shelfH" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="6" min="1" step="0.5" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelves per Rack</label><input type="number" id="shelvesPerRack" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="3" min="1" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-500 mb-1">Corridor Width (ft)</label><input type="number" id="corridorW" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="10" min="1" step="0.5" oninput="markDirty()"></div>
+        </div>
+        <p class="text-xs text-gray-400 mt-2" id="capacityEstimate">Storage capacity: — cartons / — pcs</p>
       </div>
 
       <!-- Zone palette -->
@@ -88,7 +116,7 @@
           <h2 class="text-lg font-semibold text-gray-900 mb-1">Activity-Based Costing</h2>
           <p class="text-sm text-gray-500">Define logistics activities with volume, productivity, and labor rates.</p>
         </div>
-        <button onclick="addActivity()" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">+ Add Activity</button>
+        <button onclick="addActivity(); markDirty()" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">+ Add Activity</button>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" id="activityTable">
@@ -97,7 +125,7 @@
               <th class="pb-2 pr-3">Activity</th>
               <th class="pb-2 pr-3 w-28">Volume / Year</th>
               <th class="pb-2 pr-3 w-24">UPH</th>
-              <th class="pb-2 pr-3 w-28">Labor &euro;/hr</th>
+              <th class="pb-2 pr-3 w-28">Labor HK$/hr</th>
               <th class="pb-2 pr-3 w-20">Margin %</th>
               <th class="pb-2 pr-3 w-28">Headcount</th>
               <th class="pb-2 pr-3 w-28">Labor Cost</th>
@@ -110,28 +138,29 @@
       </div>
 
       <h3 class="text-md font-semibold text-gray-900 mt-6 mb-3">Fixed Overheads</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="overheadsSection">
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Rent / m&sup2; / month (&euro;)</label><input type="number" id="rentPerSqm" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="12.5" min="0" step="0.1"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">MHE Leasing / month (&euro;)</label><input type="number" id="mheLeasing" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="3500" min="0"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">IT &amp; WMS / month (&euro;)</label><input type="number" id="itWms" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="2800" min="0"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Packaging &amp; Consumables / year (&euro;)</label><input type="number" id="packaging" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="45000" min="0"></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Rent / sqft / month (HK$)</label><input type="number" id="rentPerSqft" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="35" min="0" step="0.5" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">MHE Leasing / month (HK$)</label><input type="number" id="mheLeasing" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="28000" min="0" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">IT &amp; WMS / month (HK$)</label><input type="number" id="itWms" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="22000" min="0" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Packaging &amp; Consumables / year (HK$)</label><input type="number" id="packaging" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="360000" min="0" oninput="markDirty()"></div>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Utilities / month (&euro;)</label><input type="number" id="utilities" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="1800" min="0"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Security / month (&euro;)</label><input type="number" id="security" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="2200" min="0"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Insurance / year (&euro;)</label><input type="number" id="insurance" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="15000" min="0"></div>
-        <div><label class="block text-xs font-medium text-gray-600 mb-1">Other Fixed / year (&euro;)</label><input type="number" id="otherFixed" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="0" min="0"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Utilities / month (HK$)</label><input type="number" id="utilities" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="15000" min="0" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Security / month (HK$)</label><input type="number" id="security" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="18000" min="0" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Insurance / year (HK$)</label><input type="number" id="insurance" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="120000" min="0" oninput="markDirty()"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Other Fixed / year (HK$)</label><input type="number" id="otherFixed" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" value="0" min="0" oninput="markDirty()"></div>
       </div>
     </section>
 
     <!-- MODULE D: P&L Dashboard -->
     <section class="module-card bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Profit &amp; Loss Summary</h2>
+      <h2 class="text-lg font-semibold text-gray-900 mb-1">Profit &amp; Loss Summary</h2>
+      <p class="text-sm text-gray-500 mb-4" id="plLastUpdated">Last updated: never</p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-gray-50 rounded-lg p-4 text-center"><p class="text-xs text-gray-500 mb-1">Total Labor Cost</p><p class="text-2xl font-bold text-gray-900" id="plLaborCost">&euro;0</p></div>
-        <div class="bg-gray-50 rounded-lg p-4 text-center"><p class="text-xs text-gray-500 mb-1">Total Overheads</p><p class="text-2xl font-bold text-gray-900" id="plOverheads">&euro;0</p></div>
-        <div class="bg-emerald-50 rounded-lg p-4 text-center"><p class="text-xs text-emerald-700 mb-1">Target Revenue</p><p class="text-2xl font-bold text-emerald-700" id="plRevenue">&euro;0</p></div>
-        <div class="bg-indigo-50 rounded-lg p-4 text-center"><p class="text-xs text-indigo-700 mb-1">Projected Profit</p><p class="text-2xl font-bold text-indigo-700" id="plProfit">&euro;0</p><p class="text-xs text-indigo-500 mt-1" id="plProfitPct">(0.0%)</p></div>
+        <div class="bg-gray-50 rounded-lg p-4 text-center"><p class="text-xs text-gray-500 mb-1">Total Labor Cost</p><p class="text-2xl font-bold text-gray-900" id="plLaborCost">HK$0</p></div>
+        <div class="bg-gray-50 rounded-lg p-4 text-center"><p class="text-xs text-gray-500 mb-1">Total Overheads</p><p class="text-2xl font-bold text-gray-900" id="plOverheads">HK$0</p></div>
+        <div class="bg-emerald-50 rounded-lg p-4 text-center"><p class="text-xs text-emerald-700 mb-1">Target Revenue</p><p class="text-2xl font-bold text-emerald-700" id="plRevenue">HK$0</p></div>
+        <div class="bg-indigo-50 rounded-lg p-4 text-center"><p class="text-xs text-indigo-700 mb-1">Projected Profit</p><p class="text-2xl font-bold text-indigo-700" id="plProfit">HK$0</p><p class="text-xs text-indigo-500 mt-1" id="plProfitPct">(0.0%)</p></div>
       </div>
     </section>
 
@@ -145,29 +174,64 @@
 // ============================================================
 // STATE
 // ============================================================
-const GRID_COLS = 20, GRID_ROWS = 12, CELL_SQM = 10;
+const GRID_COLS = 20, GRID_ROWS = 12, CELL_SQFT = 80;
+
+// Zones that can hold shelves (storage)
+const STORAGE_ZONES = ['racking', 'bulk', 'cage'];
 
 const ZONE_TYPES = [
-  { id: 'racking',    name: 'Standard Racking', color: '#dbeafe', border: '#93c5fd', icon: '📦' },
-  { id: 'bulk',      name: 'Bulk Storage',     color: '#fef3c7', border: '#fbbf24', icon: '🏗️' },
-  { id: 'cage',      name: 'High-Value Cage',  color: '#fce7f3', border: '#f472b6', icon: '🔒' },
-  { id: 'vas',       name: 'VAS Area',         color: '#d1fae5', border: '#6ee7b7', icon: '🔧' },
-  { id: 'inbound',   name: 'Inbound Staging',  color: '#ede9fe', border: '#a78bfa', icon: '📥' },
-  { id: 'outbound',  name: 'Outbound Staging', color: '#e0e7ff', border: '#818cf8', icon: '📤' },
-  { id: 'office',    name: 'Office / Amenities', color: '#f3f4f6', border: '#9ca3af', icon: '🪑' },
+  { id: 'racking',    name: 'Standard Racking',  color: '#dbeafe', border: '#93c5fd', icon: '📦', storage: true },
+  { id: 'bulk',      name: 'Bulk Storage',       color: '#fef3c7', border: '#fbbf24', icon: '🏗️', storage: true },
+  { id: 'cage',      name: 'High-Value Cage',    color: '#fce7f3', border: '#f472b6', icon: '🔒', storage: true },
+  { id: 'corridor',  name: 'Corridor / Aisle',   color: '#e5e7eb', border: '#d1d5db', icon: '⬌',  storage: false },
+  { id: 'vas',       name: 'VAS Area',           color: '#d1fae5', border: '#6ee7b7', icon: '🔧', storage: false },
+  { id: 'inbound',   name: 'Inbound Staging',    color: '#ede9fe', border: '#a78bfa', icon: '📥', storage: false },
+  { id: 'outbound',  name: 'Outbound Staging',   color: '#e0e7ff', border: '#818cf8', icon: '📤', storage: false },
+  { id: 'office',    name: 'Office / Amenities',  color: '#f3f4f6', border: '#9ca3af', icon: '🪑', storage: false },
 ];
 
 let grid = Array(GRID_ROWS * GRID_COLS).fill(null);
 let selectedZone = ZONE_TYPES[0].id;
+let dirty = true; // track whether user has changed inputs since last update
 
 // Activities
 let activities = [
-  { id: 1, name: 'Receiving / Putaway', volume: 500000, uph: 45, laborRate: 16.5, margin: 12 },
-  { id: 2, name: 'Pick & Pack (B2C)', volume: 350000, uph: 25, laborRate: 16.5, margin: 20 },
-  { id: 3, name: 'QA Inspection', volume: 75000, uph: 18, laborRate: 18.0, margin: 25 },
-  { id: 4, name: 'Ticketing / Labeling', volume: 60000, uph: 30, laborRate: 15.5, margin: 18 },
+  { id: 1, name: 'Receiving / Putaway', volume: 500000, uph: 45, laborRate: 85, margin: 12 },
+  { id: 2, name: 'Pick & Pack (B2C)', volume: 350000, uph: 25, laborRate: 90, margin: 20 },
+  { id: 3, name: 'QA Inspection', volume: 75000, uph: 18, laborRate: 100, margin: 25 },
+  { id: 4, name: 'Ticketing / Labeling', volume: 60000, uph: 30, laborRate: 85, margin: 18 },
 ];
 let activityNextId = 5;
+
+// ============================================================
+// DIRTY STATE
+// ============================================================
+function markDirty() {
+  if (!dirty) {
+    dirty = true;
+    const btn = document.getElementById('btnUpdate');
+    btn.classList.add('pulse');
+    btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Update Needed`;
+  }
+}
+
+function clearDirty() {
+  dirty = false;
+  const btn = document.getElementById('btnUpdate');
+  btn.classList.remove('pulse');
+  btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Up to Date`;
+  document.getElementById('plLastUpdated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+// ============================================================
+// MASTER UPDATE — called by the Update button
+// ============================================================
+function updateAll() {
+  buildGrid();
+  buildActivityTable();
+  updatePL();
+  clearDirty();
+}
 
 // ============================================================
 // WAREHOUSE GRID
@@ -175,10 +239,11 @@ let activityNextId = 5;
 function buildPalette() {
   const palette = document.getElementById('zonePalette');
   palette.innerHTML = ZONE_TYPES.map(z =>
-    `<button onclick="selectZone('${z.id}')" data-zone="${z.id}"
+    `<button onclick="selectZone('${z.id}'); markDirty()" data-zone="${z.id}"
        class="zone-legend px-3 py-2 rounded-lg border-2 text-xs font-medium cursor-pointer flex items-center gap-1.5"
        style="background:${z.color};border-color:${z.id===selectedZone?'#4f46e5':z.border}">
        <span>${z.icon}</span> ${z.name}
+       ${z.storage ? '<span class="text-[9px] opacity-50 ml-0.5">📐</span>' : ''}
     </button>`
   ).join('');
 }
@@ -193,12 +258,13 @@ function selectZone(id) {
 
 function buildGrid() {
   const gridEl = document.getElementById('warehouseGrid');
+  document.getElementById('cellSqftLabel').textContent = CELL_SQFT;
   gridEl.innerHTML = '';
   for (let i = 0; i < GRID_ROWS * GRID_COLS; i++) {
     const cell = document.createElement('div');
     cell.className = 'grid-cell w-9 h-9 rounded cursor-pointer border border-gray-200';
     cell.dataset.index = i;
-    cell.title = `Cell ${i} — click to place ${selectedZone}`;
+    cell.title = `Cell ${i} — click to place ${ZONE_TYPES.find(z=>z.id===selectedZone).name}`;
     if (grid[i]) {
       const z = ZONE_TYPES.find(z => z.id === grid[i]);
       cell.style.background = z.color;
@@ -209,11 +275,11 @@ function buildGrid() {
       cell.style.alignItems = 'center';
       cell.style.justifyContent = 'center';
     }
-    cell.addEventListener('click', () => placeZone(i));
-    cell.addEventListener('contextmenu', (e) => { e.preventDefault(); removeZone(i); });
+    cell.addEventListener('click', () => { placeZone(i); markDirty(); });
+    cell.addEventListener('contextmenu', (e) => { e.preventDefault(); removeZone(i); markDirty(); });
     cell.addEventListener('dragover', (e) => { e.preventDefault(); cell.classList.add('drop-zone', 'active'); });
     cell.addEventListener('dragleave', () => cell.classList.remove('drop-zone', 'active'));
-    cell.addEventListener('drop', (e) => { e.preventDefault(); cell.classList.remove('drop-zone', 'active'); placeZone(i); });
+    cell.addEventListener('drop', (e) => { e.preventDefault(); cell.classList.remove('drop-zone', 'active'); placeZone(i); markDirty(); });
     cell.draggable = true;
     cell.addEventListener('dragstart', (e) => {
       e.dataTransfer.setData('text/plain', i.toString());
@@ -238,6 +304,7 @@ function removeZone(index) {
 function resetGrid() {
   grid = Array(GRID_ROWS * GRID_COLS).fill(null);
   buildGrid();
+  markDirty();
 }
 
 function updateZoneSummary() {
@@ -245,15 +312,45 @@ function updateZoneSummary() {
   ZONE_TYPES.forEach(z => counts[z.id] = 0);
   grid.forEach(cell => { if (cell) counts[cell] = (counts[cell] || 0) + 1; });
   const totalCells = Object.values(counts).reduce((a, b) => a + b, 0);
-  document.getElementById('totalSqm').textContent = (totalCells * CELL_SQM).toLocaleString();
+  const totalSqft = totalCells * CELL_SQFT;
+  document.getElementById('totalSqft').textContent = totalSqft.toLocaleString();
 
   const summaryEl = document.getElementById('zoneSummary');
   summaryEl.innerHTML = ZONE_TYPES.filter(z => counts[z.id] > 0).map(z =>
     `<span style="display:inline-flex;align-items:center;gap:4px">
        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${z.color};border:1px solid ${z.border}"></span>
-       ${z.name}: ${counts[z.id] * CELL_SQM} m&sup2;
+       ${z.name}: ${counts[z.id] * CELL_SQFT} sqft
     </span>`
   ).join('');
+
+  // Update capacity estimate
+  updateCapacityEstimate();
+}
+
+function updateCapacityEstimate() {
+  // Count storage cells (racking + bulk + cage)
+  const storageCells = grid.filter(cell => cell && STORAGE_ZONES.includes(cell)).length;
+  const shelvesPerRack = +document.getElementById('shelvesPerRack').value || 3;
+  const shelfW = +document.getElementById('shelfW').value || 8;
+  const shelfD = +document.getElementById('shelfD').value || 4;
+  const cartonL = +document.getElementById('cartonL').value || 24;
+  const cartonW = +document.getElementById('cartonW').value || 18;
+  const pcsPerCarton = +document.getElementById('pcsPerCarton').value || 12;
+
+  const totalShelves = storageCells * shelvesPerRack;
+  // How many cartons fit per shelf? (shelf dimensions in inches = ft × 12)
+  const cartonsX = Math.floor(shelfW * 12 / cartonW);  // carton width along shelf width
+  const cartonsY = Math.floor(shelfD * 12 / cartonL);  // carton length along shelf depth
+  const cartonsPerShelf = cartonsX * cartonsY;
+  const totalCartons = totalShelves * cartonsPerShelf;
+  const totalPcs = totalCartons * pcsPerCarton;
+
+  const el = document.getElementById('capacityEstimate');
+  if (storageCells === 0) {
+    el.textContent = 'Storage capacity: place storage zones on the grid to see estimates';
+  } else {
+    el.innerHTML = `Storage capacity: <strong>${totalCartons.toLocaleString()} cartons</strong> / <strong>${totalPcs.toLocaleString()} pcs</strong> (${storageCells} storage cells × ${shelvesPerRack} shelves × ${cartonsPerShelf} cartons/shelf × ${pcsPerCarton} pcs/carton)`;
+  }
 }
 
 // ============================================================
@@ -268,22 +365,22 @@ function buildActivityTable() {
     const laborCost = hoursNeeded * a.laborRate;
     const billedRev = laborCost * (1 + a.margin / 100);
     return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-      <td class="py-2 pr-3"><input type="text" value="${a.name}" onchange="updateActivity(${a.id},'name',this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none"></td>
-      <td class="py-2 pr-3"><input type="number" value="${a.volume}" onchange="updateActivity(${a.id},'volume',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0"></td>
-      <td class="py-2 pr-3"><input type="number" value="${a.uph}" onchange="updateActivity(${a.id},'uph',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
-      <td class="py-2 pr-3"><input type="number" value="${a.laborRate}" onchange="updateActivity(${a.id},'laborRate',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0" step="0.5"></td>
-      <td class="py-2 pr-3"><input type="number" value="${a.margin}" onchange="updateActivity(${a.id},'margin',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0" max="100" step="0.5"></td>
+      <td class="py-2 pr-3"><input type="text" value="${a.name.replace(/"/g,'&quot;')}" onchange="updateActivity(${a.id},'name',this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none"></td>
+      <td class="py-2 pr-3"><input type="number" value="${a.volume}" onchange="updateActivity(${a.id},'volume',+this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0"></td>
+      <td class="py-2 pr-3"><input type="number" value="${a.uph}" onchange="updateActivity(${a.id},'uph',+this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
+      <td class="py-2 pr-3"><input type="number" value="${a.laborRate}" onchange="updateActivity(${a.id},'laborRate',+this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0" step="0.5"></td>
+      <td class="py-2 pr-3"><input type="number" value="${a.margin}" onchange="updateActivity(${a.id},'margin',+this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0" max="100" step="0.5"></td>
       <td class="py-2 pr-3 text-sm font-medium text-gray-700">${headcount.toLocaleString()}</td>
-      <td class="py-2 pr-3 text-sm font-medium text-gray-700">&euro;${Math.round(laborCost).toLocaleString()}</td>
-      <td class="py-2 pr-3 text-sm font-medium text-emerald-700">&euro;${Math.round(billedRev).toLocaleString()}</td>
-      <td class="py-2"><button onclick="removeActivity(${a.id})" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button></td>
+      <td class="py-2 pr-3 text-sm font-medium text-gray-700">HK$${Math.round(laborCost).toLocaleString()}</td>
+      <td class="py-2 pr-3 text-sm font-medium text-emerald-700">HK$${Math.round(billedRev).toLocaleString()}</td>
+      <td class="py-2"><button onclick="removeActivity(${a.id}); markDirty()" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button></td>
     </tr>`;
   }).join('');
   updatePL();
 }
 
 function addActivity() {
-  activities.push({ id: activityNextId++, name: 'New Activity', volume: 0, uph: 1, laborRate: 16.5, margin: 15 });
+  activities.push({ id: activityNextId++, name: 'New Activity', volume: 0, uph: 1, laborRate: 85, margin: 15 });
   buildActivityTable();
 }
 
@@ -316,8 +413,8 @@ function updatePL() {
 
   // Overheads
   const totalCells = grid.filter(Boolean).length;
-  const totalSqm = totalCells * CELL_SQM;
-  const rent = (+document.getElementById('rentPerSqm').value || 0) * totalSqm * 12;
+  const totalSqft = totalCells * CELL_SQFT;
+  const rent = (+document.getElementById('rentPerSqft').value || 0) * totalSqft * 12;
   const mhe = (+document.getElementById('mheLeasing').value || 0) * 12;
   const it = (+document.getElementById('itWms').value || 0) * 12;
   const pkg = +document.getElementById('packaging').value || 0;
@@ -331,25 +428,20 @@ function updatePL() {
   const profit = totalBilledRev - totalCost;
   const profitPct = totalBilledRev > 0 ? (profit / totalBilledRev * 100) : 0;
 
-  document.getElementById('plLaborCost').textContent = `\u20ac${Math.round(totalLaborCost).toLocaleString()}`;
-  document.getElementById('plOverheads').textContent = `\u20ac${Math.round(totalOverheads).toLocaleString()}`;
-  document.getElementById('plRevenue').textContent = `\u20ac${Math.round(totalBilledRev).toLocaleString()}`;
-  document.getElementById('plProfit').textContent = `\u20ac${Math.round(profit).toLocaleString()}`;
+  document.getElementById('plLaborCost').textContent = `HK$${Math.round(totalLaborCost).toLocaleString()}`;
+  document.getElementById('plOverheads').textContent = `HK$${Math.round(totalOverheads).toLocaleString()}`;
+  document.getElementById('plRevenue').textContent = `HK$${Math.round(totalBilledRev).toLocaleString()}`;
+  document.getElementById('plProfit').textContent = `HK$${Math.round(profit).toLocaleString()}`;
   document.getElementById('plProfitPct').textContent = `(${profitPct.toFixed(1)}%)`;
 }
-
-// Recalculate on any input change
-document.addEventListener('input', (e) => {
-  if (e.target.closest('#warehouseGrid')) return;
-  buildActivityTable();
-  updateZoneSummary();
-  updatePL();
-});
 
 // ============================================================
 // EXPORT EXCEL
 // ============================================================
 function exportExcel() {
+  // Ensure calculations are current
+  updateAll();
+
   const wb = XLSX.utils.book_new();
 
   // Tab 1: Tender Setup
@@ -361,18 +453,49 @@ function exportExcel() {
     'Inbound Volume/Year': +document.getElementById('inboundVol').value || 0,
     'Outbound Volume/Year': +document.getElementById('outboundVol').value || 0,
     'SKU Count': +document.getElementById('skuCount').value || 0,
+    'Pcs per Carton': +document.getElementById('pcsPerCarton').value || 0,
+    'Carton L (in)': +document.getElementById('cartonL').value || 0,
+    'Carton W (in)': +document.getElementById('cartonW').value || 0,
+    'Carton H (in)': +document.getElementById('cartonH').value || 0,
     'Avg Units/Pallet': +document.getElementById('unitsPerPallet').value || 0,
+    'Shelf W (ft)': +document.getElementById('shelfW').value || 0,
+    'Shelf D (ft)': +document.getElementById('shelfD').value || 0,
+    'Shelf H (ft)': +document.getElementById('shelfH').value || 0,
+    'Shelves per Rack': +document.getElementById('shelvesPerRack').value || 0,
+    'Corridor W (ft)': +document.getElementById('corridorW').value || 0,
   };
-  const wsSetup = XLSX.utils.json_to_sheet([setup]);
-  XLSX.utils.book_append_sheet(wb, wsSetup, 'Tender Setup');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([setup]), 'Tender Setup');
 
   // Tab 2: Floorplan
   const totalCells = grid.filter(Boolean).length;
   const zoneCounts = {};
   ZONE_TYPES.forEach(z => zoneCounts[z.name] = 0);
-  grid.forEach(cell => { if (cell) { const z = ZONE_TYPES.find(z => z.id === cell); zoneCounts[z.name] = (zoneCounts[z.name] || 0) + 1; }});
-  const floorplanData = Object.entries(zoneCounts).filter(([,v]) => v > 0).map(([k,v]) => ({ Zone: k, 'Cells': v, 'Sqm': v * CELL_SQM }));
-  floorplanData.push({ Zone: 'TOTAL', Cells: totalCells, Sqm: totalCells * CELL_SQM });
+  grid.forEach(cell => {
+    if (cell) {
+      const z = ZONE_TYPES.find(z => z.id === cell);
+      zoneCounts[z.name] = (zoneCounts[z.name] || 0) + 1;
+    }
+  });
+  const floorplanData = Object.entries(zoneCounts)
+    .filter(([,v]) => v > 0)
+    .map(([k,v]) => ({ Zone: k, 'Cells': v, 'Sqft': v * CELL_SQFT }));
+  floorplanData.push({ Zone: 'TOTAL', Cells: totalCells, Sqft: totalCells * CELL_SQFT });
+
+  // Add capacity
+  const storageCells = grid.filter(cell => cell && STORAGE_ZONES.includes(cell)).length;
+  const shelvesPerRack = +document.getElementById('shelvesPerRack').value || 3;
+  const shelfW = +document.getElementById('shelfW').value || 8;
+  const shelfD = +document.getElementById('shelfD').value || 4;
+  const cartonL = +document.getElementById('cartonL').value || 24;
+  const cartonW = +document.getElementById('cartonW').value || 18;
+  const pcsPerCarton = +document.getElementById('pcsPerCarton').value || 12;
+  const cartonsPerShelf = Math.floor(shelfW * 12 / cartonW) * Math.floor(shelfD * 12 / cartonL);
+  const totalShelves = storageCells * shelvesPerRack;
+  floorplanData.push(
+    { Zone: 'Storage Cells', Cells: storageCells, Sqft: storageCells * CELL_SQFT },
+    { Zone: 'Total Shelves', Cells: totalShelves, Sqft: totalShelves * cartonsPerShelf },
+    { Zone: 'Est. Carton Capacity', Cells: totalShelves * cartonsPerShelf, Sqft: totalShelves * cartonsPerShelf * pcsPerCarton },
+  );
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(floorplanData), 'Floorplan');
 
   // Tab 3: Activity Costing
@@ -383,15 +506,16 @@ function exportExcel() {
     const cost = hours * a.laborRate;
     const rev = cost * (1 + a.margin / 100);
     return {
-      Activity: a.name, 'Volume/Year': a.volume, UPH: a.uph, 'Labor Rate': a.laborRate,
-      'Margin %': a.margin, Headcount: hc, 'Labor Cost': Math.round(cost), 'Billed Revenue': Math.round(rev)
+      Activity: a.name, 'Volume/Year': a.volume, UPH: a.uph, 'Labor Rate (HK$)': a.laborRate,
+      'Margin %': a.margin, Headcount: hc, 'Labor Cost (HK$)': Math.round(cost), 'Billed Revenue (HK$)': Math.round(rev)
     };
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(actData), 'Activity Costing');
 
   // Tab 4: Overheads
+  const totalSqft = totalCells * CELL_SQFT;
   const ovhData = [
-    { Item: 'Rent', Monthly: +document.getElementById('rentPerSqm').value || 0, Annual: ((+document.getElementById('rentPerSqm').value || 0) * totalCells * CELL_SQM * 12) },
+    { Item: 'Rent', Monthly: +document.getElementById('rentPerSqft').value || 0, Annual: ((+document.getElementById('rentPerSqft').value || 0) * totalSqft * 12) },
     { Item: 'MHE Leasing', Monthly: +document.getElementById('mheLeasing').value || 0, Annual: (+document.getElementById('mheLeasing').value || 0) * 12 },
     { Item: 'IT & WMS', Monthly: +document.getElementById('itWms').value || 0, Annual: (+document.getElementById('itWms').value || 0) * 12 },
     { Item: 'Packaging', Monthly: '', Annual: +document.getElementById('packaging').value || 0 },
@@ -403,17 +527,17 @@ function exportExcel() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ovhData), 'Overheads');
 
   // Tab 5: P&L Summary
-  const totalLaborCost = actData.reduce((s, a) => s + a['Labor Cost'], 0);
-  const totalRevenue = actData.reduce((s, a) => s + a['Billed Revenue'], 0);
+  const totalLaborCost = actData.reduce((s, a) => s + a['Labor Cost (HK$)'], 0);
+  const totalRevenue = actData.reduce((s, a) => s + a['Billed Revenue (HK$)'], 0);
   const totalOverheads = ovhData.reduce((s, o) => s + o.Annual, 0);
   const totalCost = totalLaborCost + totalOverheads;
   const profit = totalRevenue - totalCost;
   const plData = [
-    { Item: 'Total Labor Cost', Amount: Math.round(totalLaborCost) },
-    { Item: 'Total Overheads', Amount: Math.round(totalOverheads) },
-    { Item: 'Total Cost', Amount: Math.round(totalCost) },
-    { Item: 'Target Revenue', Amount: Math.round(totalRevenue) },
-    { Item: 'Projected Profit', Amount: Math.round(profit) },
+    { Item: 'Total Labor Cost (HK$)', Amount: Math.round(totalLaborCost) },
+    { Item: 'Total Overheads (HK$)', Amount: Math.round(totalOverheads) },
+    { Item: 'Total Cost (HK$)', Amount: Math.round(totalCost) },
+    { Item: 'Target Revenue (HK$)', Amount: Math.round(totalRevenue) },
+    { Item: 'Projected Profit (HK$)', Amount: Math.round(profit) },
     { Item: 'Profit Margin', Amount: totalRevenue > 0 ? (profit / totalRevenue * 100).toFixed(1) + '%' : '0.0%' },
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(plData), 'P&L Summary');
@@ -428,13 +552,7 @@ function exportExcel() {
 buildPalette();
 buildGrid();
 buildActivityTable();
-
-// Close palette persistence on grid interaction
-document.addEventListener('click', (e) => {
-  if (e.target.closest('#warehouseGrid')) {
-    // Painting mode: keep placing selected zone on click
-  }
-});
+clearDirty();
 </script>
 </body>
 </html>
