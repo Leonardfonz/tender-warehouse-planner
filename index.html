@@ -11,8 +11,6 @@
     body { font-family: 'Inter', system-ui, sans-serif; }
     .grid-cell { transition: background-color 0.08s ease; user-select: none; }
     .grid-cell:hover { filter: brightness(0.92); }
-    .dragging { opacity: 0.7; cursor: grabbing; }
-    .drop-zone.active { outline: 3px dashed #6366f1; outline-offset: -2px; }
     .module-card { transition: box-shadow 0.2s ease; }
     .module-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
     input[type="number"]::-webkit-inner-spin-button,
@@ -30,6 +28,7 @@
     .page.active { display: block; }
     .pct-warn { color: #ef4444; }
     .pct-ok { color: #10b981; }
+    .save-flash { transition: all 0.15s ease; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
@@ -42,11 +41,13 @@
         <span class="text-xs text-gray-400">Hong Kong</span>
       </div>
       <div class="flex items-center justify-center gap-0">
-        <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold step-active" id="step1">1</div><span class="text-xs font-medium text-gray-700 hidden sm:inline">Setup</span></div>
-        <div class="flex-1 h-1 mx-2 rounded step-line-pending" id="line1"></div>
-        <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold step-pending" id="step2">2</div><span class="text-xs font-medium text-gray-400 hidden sm:inline">Floorplan</span></div>
-        <div class="flex-1 h-1 mx-2 rounded step-line-pending" id="line2"></div>
-        <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold step-pending" id="step3">3</div><span class="text-xs font-medium text-gray-400 hidden sm:inline">Costing &amp; P&amp;L</span></div>
+        <div class="flex items-center gap-1"><div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold step-active" id="step1">1</div><span class="text-[10px] font-medium text-gray-700 hidden sm:inline">Setup</span></div>
+        <div class="flex-1 h-1 mx-1 rounded step-line-pending" id="line1"></div>
+        <div class="flex items-center gap-1"><div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold step-pending" id="step2">2</div><span class="text-[10px] font-medium text-gray-400 hidden sm:inline">Shelving</span></div>
+        <div class="flex-1 h-1 mx-1 rounded step-line-pending" id="line2"></div>
+        <div class="flex items-center gap-1"><div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold step-pending" id="step3">3</div><span class="text-[10px] font-medium text-gray-400 hidden sm:inline">Floorplan</span></div>
+        <div class="flex-1 h-1 mx-1 rounded step-line-pending" id="line3"></div>
+        <div class="flex items-center gap-1"><div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold step-pending" id="step4">4</div><span class="text-[10px] font-medium text-gray-400 hidden sm:inline">Costing</span></div>
       </div>
     </div>
   </header>
@@ -56,22 +57,21 @@
     <!-- ============ PAGE 1: Tender Setup ============ -->
     <div class="page active" id="page1">
       <section class="module-card bg-white rounded-xl border border-gray-200 p-6 space-y-6">
+        <h2 class="text-lg font-semibold text-gray-900">Step 1 — Tender Setup</h2>
 
-        <!-- Basic Setup -->
         <div>
-          <h2 class="text-lg font-semibold text-gray-900 mb-1">Tender Setup</h2>
           <p class="text-sm text-gray-500 mb-4">Basic tender information and volume baseline.</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div><label class="block text-xs font-medium text-gray-600 mb-1">Tender Name</label><input type="text" id="tenderName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Q4 Fulfillment RFP" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-600 mb-1">Client</label><input type="text" id="clientName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Brand name" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-600 mb-1">Operational Days / Year</label><input type="number" id="opDays" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="250" min="1" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-600 mb-1">Contract Duration (years)</label><input type="number" id="contractYears" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="3" min="1" step="0.5" oninput="saveAndRecalc()"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Tender Name</label><input type="text" id="tenderName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Q4 Fulfillment RFP" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Client</label><input type="text" id="clientName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Brand name" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Operational Days / Year</label><input type="number" id="opDays" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="250" min="1" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Contract Duration (years)</label><input type="number" id="contractYears" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="3" min="1" step="0.5" oninput="markDirty()"></div>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-            <div><label class="block text-xs font-medium text-gray-600 mb-1">Inbound Volume / Year</label><input type="number" id="inboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="500000" min="0" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-600 mb-1">Outbound Volume / Year</label><input type="number" id="outboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="450000" min="0" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-600 mb-1">SKU Count</label><input type="number" id="skuCount" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="1200" min="0" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-600 mb-1">Days of Inventory Target</label><input type="number" id="invDays" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="30" min="1" oninput="saveAndRecalc()"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Inbound Volume / Year</label><input type="number" id="inboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="500000" min="0" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Outbound Volume / Year</label><input type="number" id="outboundVol" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="450000" min="0" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">SKU Count</label><input type="number" id="skuCount" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="1200" min="0" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Days of Inventory Target</label><input type="number" id="invDays" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="30" min="1" oninput="markDirty()"></div>
           </div>
         </div>
 
@@ -80,14 +80,14 @@
           <div class="flex items-center justify-between mb-3">
             <div>
               <h3 class="text-sm font-semibold text-gray-700">Carton Types</h3>
-              <p class="text-xs text-gray-400">Add one or more carton specifications used in this operation.</p>
+              <p class="text-xs text-gray-400">Define each carton used. These feed into shelf capacity on Step 2.</p>
             </div>
             <button onclick="addCartonType()" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">+ Add Carton</button>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead><tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                <th class="pb-2 pr-2">Name</th><th class="pb-2 pr-2 w-20">L (cm)</th><th class="pb-2 pr-2 w-20">W (cm)</th><th class="pb-2 pr-2 w-20">H (cm)</th><th class="pb-2 pr-2 w-24">Pcs / Carton</th><th class="pb-2 w-8"></th>
+                <th class="pb-2 pr-2">Name</th><th class="pb-2 pr-2 w-16">L cm</th><th class="pb-2 pr-2 w-16">W cm</th><th class="pb-2 pr-2 w-16">H cm</th><th class="pb-2 pr-2 w-20">Pcs/Ctn</th><th class="pb-2 w-8"></th>
               </tr></thead>
               <tbody id="cartonBody"></tbody>
             </table>
@@ -99,15 +99,68 @@
           <div class="flex items-center justify-between mb-3">
             <div>
               <h3 class="text-sm font-semibold text-gray-700">Product Category Mix</h3>
-              <p class="text-xs text-gray-400">Percentage breakdown of inventory by category. Must sum to 100%.</p>
+              <p class="text-xs text-gray-400">Percentage breakdown of inventory. Must sum to 100%.</p>
             </div>
             <span class="text-xs font-bold" id="catTotal">Total: 100%</span>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="categoryGrid"></div>
         </div>
 
-        <div class="flex justify-end">
-          <button onclick="goToPage(2)" class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-sm flex items-center gap-2">
+        <div class="flex justify-between pt-2">
+          <button onclick="saveExplicit('page1')" id="saveBtn1" class="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            Save
+          </button>
+          <button onclick="goToPage(2)" class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
+            Next: Shelving
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ PAGE 2: Shelf Configuration ============ -->
+    <div class="page" id="page2">
+      <section class="module-card bg-white rounded-xl border border-gray-200 p-6 space-y-6">
+        <h2 class="text-lg font-semibold text-gray-900">Step 2 — Shelf &amp; Corridor Configuration</h2>
+        <p class="text-sm text-gray-500">These usually stay consistent across projects. Set once, reuse.</p>
+
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Shelf Dimensions</h3>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Width (m)</label><input type="number" id="shelfW" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="2.4" min="0.1" step="0.1" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Depth (m)</label><input type="number" id="shelfD" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="1.2" min="0.1" step="0.1" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Height (m)</label><input type="number" id="shelfH" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="1.8" min="0.1" step="0.1" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelves per Rack</label><input type="number" id="shelvesPerRack" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="3" min="1" oninput="markDirty()"></div>
+            <div><label class="block text-xs font-medium text-gray-500 mb-1">Corridor Width (m)</label><input type="number" id="corridorW" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="3.0" min="0.5" step="0.1" oninput="markDirty()"></div>
+          </div>
+        </div>
+
+        <!-- Carton-per-Shelf Capacity Table -->
+        <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+          <h3 class="text-sm font-semibold text-indigo-900 mb-3">Carton Capacity per Shelf &amp; Rack</h3>
+          <p class="text-xs text-indigo-600 mb-3">How many cartons of each type fit on one shelf, and per full rack.</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm bg-white rounded-lg overflow-hidden">
+              <thead><tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
+                <th class="px-3 py-2">Carton Type</th><th class="px-3 py-2">Size (cm)</th><th class="px-3 py-2 w-20">Pcs/Ctn</th><th class="px-3 py-2 w-28">Per Shelf</th><th class="px-3 py-2 w-28">Per Rack</th><th class="px-3 py-2">Fit Calculation</th>
+              </tr></thead>
+              <tbody id="shelfCapacityBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="flex justify-between pt-2">
+          <div class="flex gap-2">
+            <button onclick="goToPage(1)" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>Back
+            </button>
+            <button onclick="saveExplicit('page2')" id="saveBtn2" class="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+              Save
+            </button>
+          </div>
+          <button onclick="goToPage(3)" class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
             Next: Floorplan
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </button>
@@ -115,32 +168,21 @@
       </section>
     </div>
 
-    <!-- ============ PAGE 2: Warehouse Floorplan ============ -->
-    <div class="page" id="page2">
+    <!-- ============ PAGE 3: Warehouse Floorplan ============ -->
+    <div class="page" id="page3">
       <section class="module-card bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+        <h2 class="text-lg font-semibold text-gray-900">Step 3 — Warehouse Floorplan</h2>
 
         <!-- Mini Dashboard -->
         <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
-          <h3 class="text-sm font-semibold text-indigo-900 mb-3">Capacity Requirements (from Step 1)</h3>
+          <h3 class="text-sm font-semibold text-indigo-900 mb-3">Capacity Requirements (from Steps 1 &amp; 2)</h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center" id="miniDashboard"></div>
         </div>
 
-        <!-- Shelf Config -->
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">Shelf &amp; Corridor Specs</h3>
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Width (m)</label><input type="number" id="shelfW" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="2.4" min="0.1" step="0.1" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Depth (m)</label><input type="number" id="shelfD" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="1.2" min="0.1" step="0.1" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelf Height (m)</label><input type="number" id="shelfH" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="1.8" min="0.1" step="0.1" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-500 mb-1">Shelves per Rack</label><input type="number" id="shelvesPerRack" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="3" min="1" oninput="saveAndRecalc()"></div>
-            <div><label class="block text-xs font-medium text-gray-500 mb-1">Corridor Width (m)</label><input type="number" id="corridorW" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="3.0" min="0.5" step="0.1" oninput="saveAndRecalc()"></div>
-          </div>
-        </div>
-
-        <!-- Zone Palette + Grid -->
+        <!-- Grid -->
         <div>
           <div class="flex items-center justify-between mb-3">
-            <p class="text-sm text-gray-500">Click &amp; drag to paint. Right-click to erase. Each cell = <span class="font-medium">80 sqft</span>.</p>
+            <p class="text-sm text-gray-500">Click &amp; drag to paint zones. Right-click to erase. Each cell ≈ 80 sqft.</p>
             <button onclick="resetGrid()" class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Reset Grid</button>
           </div>
           <div class="flex flex-wrap gap-2 mb-3" id="zonePalette"></div>
@@ -152,36 +194,42 @@
 
         <!-- Zone Dimensions -->
         <div class="border-t border-gray-100 pt-4">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">Zone Dimensions (override per type)</h3>
-          <p class="text-xs text-gray-400 mb-3">Set actual dimensions for each zone. Area is used for rent calculations.</p>
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Zone Dimensions</h3>
+          <p class="text-xs text-gray-400 mb-3">Override dimensions per zone type. Area feeds into Step 4 rent.</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="zoneDimsGrid"></div>
         </div>
 
         <div class="flex justify-between pt-2">
-          <button onclick="goToPage(1)" class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>Back: Setup
-          </button>
-          <button onclick="goToPage(3)" class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-sm flex items-center gap-2">
-            Next: Costing &amp; P&amp;L
+          <div class="flex gap-2">
+            <button onclick="goToPage(2)" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>Back
+            </button>
+            <button onclick="saveExplicit('page3')" id="saveBtn3" class="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+              Save
+            </button>
+          </div>
+          <button onclick="goToPage(4)" class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
+            Next: Costing
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
       </section>
     </div>
 
-    <!-- ============ PAGE 3: Costing & P&L ============ -->
-    <div class="page" id="page3">
+    <!-- ============ PAGE 4: Costing & P&L ============ -->
+    <div class="page" id="page4">
       <!-- Activities -->
       <section class="module-card bg-white rounded-xl border border-gray-200 p-6 mb-6">
         <div class="flex items-start justify-between mb-4">
           <div>
-            <h2 class="text-lg font-semibold text-gray-900 mb-1">Activity-Based Costing</h2>
-            <p class="text-sm text-gray-500">Volumes from Step 1. Numbers recalculate as you type.</p>
+            <h2 class="text-lg font-semibold text-gray-900 mb-1">Step 4a — Activity-Based Costing</h2>
+            <p class="text-sm text-gray-500">Volumes from Step 1. Numbers recalculate automatically.</p>
           </div>
           <button onclick="addActivity()" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">+ Add Activity</button>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-sm" id="activityTable">
+          <table class="w-full text-sm">
             <thead><tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200">
               <th class="pb-2 pr-3">Activity</th><th class="pb-2 pr-3 w-28">Volume / Year</th><th class="pb-2 pr-3 w-20">UPH</th><th class="pb-2 pr-3 w-28">Labor HK$/hr</th><th class="pb-2 pr-3 w-20">Margin %</th><th class="pb-2 pr-3 w-28">Headcount</th><th class="pb-2 pr-3 w-28">Labor Cost</th><th class="pb-2 pr-3 w-28">Billed Rev</th><th class="pb-2 w-10"></th>
             </tr></thead>
@@ -192,24 +240,25 @@
 
       <!-- Overheads -->
       <section class="module-card bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Fixed Overheads</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Step 4b — Fixed Overheads</h2>
+        <p class="text-xs text-gray-400 mb-4">Rent is linked to the floorplan area from Step 3.</p>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div><label class="block text-xs font-medium text-gray-600 mb-1">Rent / sqft / month (HK$)</label><input type="number" id="rentPerSqft" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="35" min="0" step="0.5" oninput="saveAndRecalc()"><p class="text-[10px] text-gray-400 mt-0.5" id="rentAnnual"></p></div>
-          <div><label class="block text-xs font-medium text-gray-600 mb-1">MHE Leasing / month (HK$)</label><input type="number" id="mheLeasing" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="28000" min="0" oninput="saveAndRecalc()"></div>
-          <div><label class="block text-xs font-medium text-gray-600 mb-1">IT &amp; WMS / month (HK$)</label><input type="number" id="itWms" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="22000" min="0" oninput="saveAndRecalc()"></div>
-          <div><label class="block text-xs font-medium text-gray-600 mb-1">Packaging &amp; Consumables / year (HK$)</label><input type="number" id="packaging" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="360000" min="0" oninput="saveAndRecalc()"></div>
+          <div><label class="block text-xs font-medium text-gray-600 mb-1">Rent / sqft / month (HK$)</label><input type="number" id="rentPerSqft" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="35" min="0" step="0.5" oninput="markDirty()"><p class="text-[10px] text-gray-400 mt-0.5" id="rentAnnual"></p></div>
+          <div><label class="block text-xs font-medium text-gray-600 mb-1">MHE Leasing / month (HK$)</label><input type="number" id="mheLeasing" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="28000" min="0" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-600 mb-1">IT &amp; WMS / month (HK$)</label><input type="number" id="itWms" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="22000" min="0" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-600 mb-1">Packaging / year (HK$)</label><input type="number" id="packaging" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="360000" min="0" oninput="markDirty()"></div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div><label class="block text-xs font-medium text-gray-600 mb-1">Utilities / month (HK$)</label><input type="number" id="utilities" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="15000" min="0" oninput="saveAndRecalc()"></div>
-          <div><label class="block text-xs font-medium text-gray-600 mb-1">Security / month (HK$)</label><input type="number" id="security" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="18000" min="0" oninput="saveAndRecalc()"></div>
-          <div><label class="block text-xs font-medium text-gray-600 mb-1">Insurance / year (HK$)</label><input type="number" id="insurance" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="120000" min="0" oninput="saveAndRecalc()"></div>
-          <div><label class="block text-xs font-medium text-gray-600 mb-1">Other Fixed / year (HK$)</label><input type="number" id="otherFixed" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="0" min="0" oninput="saveAndRecalc()"></div>
+          <div><label class="block text-xs font-medium text-gray-600 mb-1">Utilities / month (HK$)</label><input type="number" id="utilities" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="15000" min="0" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-600 mb-1">Security / month (HK$)</label><input type="number" id="security" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="18000" min="0" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-600 mb-1">Insurance / year (HK$)</label><input type="number" id="insurance" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="120000" min="0" oninput="markDirty()"></div>
+          <div><label class="block text-xs font-medium text-gray-600 mb-1">Other Fixed / year (HK$)</label><input type="number" id="otherFixed" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" value="0" min="0" oninput="markDirty()"></div>
         </div>
       </section>
 
       <!-- P&L -->
       <section class="module-card bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Profit &amp; Loss Summary</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Step 4c — Profit &amp; Loss Summary</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-gray-50 rounded-lg p-4 text-center"><p class="text-xs text-gray-500 mb-1">Total Labor Cost</p><p class="text-2xl font-bold text-gray-900" id="plLaborCost">HK$0</p></div>
           <div class="bg-gray-50 rounded-lg p-4 text-center"><p class="text-xs text-gray-500 mb-1">Total Overheads</p><p class="text-2xl font-bold text-gray-900" id="plOverheads">HK$0</p></div>
@@ -219,10 +268,16 @@
       </section>
 
       <div class="flex justify-between">
-        <button onclick="goToPage(2)" class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>Back: Floorplan
-        </button>
-        <button onclick="exportExcel()" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-sm flex items-center gap-2">
+        <div class="flex gap-2">
+          <button onclick="goToPage(3)" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>Back
+          </button>
+          <button onclick="saveExplicit('page4')" id="saveBtn4" class="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            Save
+          </button>
+        </div>
+        <button onclick="exportExcel()" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Export .xlsx
         </button>
@@ -237,11 +292,12 @@
 
 <script>
 // ============================================================
-// CONSTANTS & STATE
+// STATE
 // ============================================================
-const GRID_COLS = 20, GRID_ROWS = 12, CELL_SQFT = 80;
+const GRID_COLS = 20, GRID_ROWS = 12;
 const STORAGE_ZONES = ['racking', 'bulk', 'cage'];
-const LS_KEY = 'tender_planner_data';
+const LS_KEY = 'tender_planner_v2';
+const TOTAL_PAGES = 4;
 
 const ZONE_TYPES = [
   { id: 'racking',   name: 'Standard Racking',  color: '#dbeafe', border: '#93c5fd', icon: '📦', storage: true,  defW: 2.4, defD: 1.2 },
@@ -254,7 +310,6 @@ const ZONE_TYPES = [
   { id: 'office',    name: 'Office / Amenities',  color: '#f3f4f6', border: '#9ca3af', icon: '🪑', storage: false, defW: 4.0, defD: 3.0 },
 ];
 
-// Default carton types
 let cartonTypes = [
   { id: 1, name: 'Standard', l: 60, w: 45, h: 30, pcs: 12 },
   { id: 2, name: 'Shoebox', l: 35, w: 25, h: 15, pcs: 1 },
@@ -262,7 +317,6 @@ let cartonTypes = [
 ];
 let cartonNextId = 4;
 
-// Categories with percentages
 let categories = [
   { id: 'shoes', name: 'Shoes', pct: 25 },
   { id: 'sml', name: 'SML Apparel', pct: 30 },
@@ -273,13 +327,10 @@ let categories = [
 
 let grid = Array(GRID_ROWS * GRID_COLS).fill(null);
 let selectedZone = ZONE_TYPES[0].id;
-let isPainting = false;
-let paintedThisStroke = new Set();
+let isPainting = false, paintedThisStroke = new Set();
+let zoneDims = {};
+let dirty = false;
 
-// Zone dimension overrides (null = use default)
-let zoneDims = {}; // { zoneId: { w: number, d: number } }
-
-// Activities
 let activities = [
   { id: 1, name: 'Receiving / Putaway', volume: 500000, uph: 45, laborRate: 85, margin: 12 },
   { id: 2, name: 'Pick & Pack (B2C)', volume: 350000, uph: 25, laborRate: 90, margin: 20 },
@@ -292,35 +343,17 @@ let activityNextId = 5;
 // PERSISTENCE
 // ============================================================
 function gatherInputs() {
-  return {
-    tenderName: document.getElementById('tenderName')?.value || '',
-    clientName: document.getElementById('clientName')?.value || '',
-    opDays: document.getElementById('opDays')?.value || '250',
-    contractYears: document.getElementById('contractYears')?.value || '3',
-    inboundVol: document.getElementById('inboundVol')?.value || '0',
-    outboundVol: document.getElementById('outboundVol')?.value || '0',
-    skuCount: document.getElementById('skuCount')?.value || '0',
-    invDays: document.getElementById('invDays')?.value || '30',
-    shelfW: document.getElementById('shelfW')?.value || '2.4',
-    shelfD: document.getElementById('shelfD')?.value || '1.2',
-    shelfH: document.getElementById('shelfH')?.value || '1.8',
-    shelvesPerRack: document.getElementById('shelvesPerRack')?.value || '3',
-    corridorW: document.getElementById('corridorW')?.value || '3.0',
-    rentPerSqft: document.getElementById('rentPerSqft')?.value || '35',
-    mheLeasing: document.getElementById('mheLeasing')?.value || '28000',
-    itWms: document.getElementById('itWms')?.value || '22000',
-    packaging: document.getElementById('packaging')?.value || '360000',
-    utilities: document.getElementById('utilities')?.value || '15000',
-    security: document.getElementById('security')?.value || '18000',
-    insurance: document.getElementById('insurance')?.value || '120000',
-    otherFixed: document.getElementById('otherFixed')?.value || '0',
-  };
+  const ids = ['tenderName','clientName','opDays','contractYears','inboundVol','outboundVol','skuCount','invDays',
+               'shelfW','shelfD','shelfH','shelvesPerRack','corridorW',
+               'rentPerSqft','mheLeasing','itWms','packaging','utilities','security','insurance','otherFixed'];
+  const out = {};
+  ids.forEach(id => { const el = document.getElementById(id); if (el) out[id] = el.value; });
+  return out;
 }
 
 function saveState() {
   localStorage.setItem(LS_KEY, JSON.stringify({
-    inputs: gatherInputs(),
-    grid, selectedZone, cartonTypes, cartonNextId, categories,
+    inputs: gatherInputs(), grid, selectedZone, cartonTypes, cartonNextId, categories,
     zoneDims, activities, activityNextId
   }));
 }
@@ -341,7 +374,19 @@ function loadState() {
   } catch(e) {}
 }
 
-function saveAndRecalc() { saveState(); refreshAll(); }
+function markDirty() { dirty = true; }
+function saveAndRecalc() { saveState(); refreshCurrentPage(); }
+
+function saveExplicit(pageId) {
+  saveState();
+  dirty = false;
+  const btn = document.getElementById('saveBtn' + pageId.replace('page',''));
+  if (!btn) return;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Saved';
+  btn.classList.add('bg-emerald-100', 'text-emerald-700');
+  setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('bg-emerald-100', 'text-emerald-700'); }, 1500);
+}
 
 // ============================================================
 // NAVIGATION
@@ -349,101 +394,125 @@ function saveAndRecalc() { saveState(); refreshAll(); }
 let currentPage = 1;
 
 function goToPage(n) {
-  saveState();
+  if (dirty) { saveState(); dirty = false; }
   currentPage = n;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page' + n).classList.add('active');
-  for (let i = 1; i <= 3; i++) {
+
+  for (let i = 1; i <= TOTAL_PAGES; i++) {
     const step = document.getElementById('step' + i);
-    const line = i < 3 ? document.getElementById('line' + i) : null;
-    step.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold';
-    if (i < n) { step.classList.add('step-done'); if(line) line.className = 'flex-1 h-1 mx-2 rounded step-line-done'; }
-    else if (i === n) { step.classList.add('step-active'); if(line) line.className = 'flex-1 h-1 mx-2 rounded step-line-active'; }
-    else { step.classList.add('step-pending'); if(line) line.className = 'flex-1 h-1 mx-2 rounded step-line-pending'; }
+    const line = i < TOTAL_PAGES ? document.getElementById('line' + i) : null;
+    step.className = 'w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold';
+    if (i < n) { step.classList.add('step-done'); if(line) line.className = 'flex-1 h-1 mx-1 rounded step-line-done'; }
+    else if (i === n) { step.classList.add('step-active'); if(line) line.className = 'flex-1 h-1 mx-1 rounded step-line-active'; }
+    else { step.classList.add('step-pending'); if(line) line.className = 'flex-1 h-1 mx-1 rounded step-line-pending'; }
   }
-  if (n === 1) buildCartonTable(); buildCategoryGrid();
-  if (n === 2) { buildPalette(); buildGrid(); buildMiniDashboard(); buildZoneDims(); }
-  if (n === 3) { buildActivityTable(); updatePL(); updateRentNote(); }
+
+  refreshCurrentPage();
+}
+
+function refreshCurrentPage() {
+  if (currentPage === 1) { buildCartonTable(); buildCategoryGrid(); }
+  if (currentPage === 2) buildShelfCapacity();
+  if (currentPage === 3) { buildPalette(); buildGrid(); buildMiniDashboard(); buildZoneDims(); }
+  if (currentPage === 4) { buildActivityTable(); updatePL(); updateRentNote(); }
 }
 
 function refreshAll() {
-  buildCartonTable(); buildCategoryGrid();
+  buildCartonTable(); buildCategoryGrid(); buildShelfCapacity();
   buildGrid(); buildMiniDashboard(); buildZoneDims();
   buildActivityTable(); updatePL(); updateRentNote();
 }
 
 // ============================================================
-// PAGE 1: CARTON TYPES
+// PAGE 1: CARTON TYPES + CATEGORIES
 // ============================================================
 function buildCartonTable() {
   const tbody = document.getElementById('cartonBody');
   if (!tbody) return;
   tbody.innerHTML = cartonTypes.map(ct => `
     <tr class="border-b border-gray-100 hover:bg-gray-50">
-      <td class="py-2 pr-2"><input type="text" value="${ct.name}" onchange="updateCarton(${ct.id},'name',this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none"></td>
-      <td class="py-2 pr-2"><input type="number" value="${ct.l}" onchange="updateCarton(${ct.id},'l',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
-      <td class="py-2 pr-2"><input type="number" value="${ct.w}" onchange="updateCarton(${ct.id},'w',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
-      <td class="py-2 pr-2"><input type="number" value="${ct.h}" onchange="updateCarton(${ct.id},'h',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
-      <td class="py-2 pr-2"><input type="number" value="${ct.pcs}" onchange="updateCarton(${ct.id},'pcs',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
+      <td class="py-2 pr-2"><input type="text" value="${ct.name}" onchange="updateCarton(${ct.id},'name',this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none"></td>
+      <td class="py-2 pr-2"><input type="number" value="${ct.l}" onchange="updateCarton(${ct.id},'l',+this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
+      <td class="py-2 pr-2"><input type="number" value="${ct.w}" onchange="updateCarton(${ct.id},'w',+this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
+      <td class="py-2 pr-2"><input type="number" value="${ct.h}" onchange="updateCarton(${ct.id},'h',+this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
+      <td class="py-2 pr-2"><input type="number" value="${ct.pcs}" onchange="updateCarton(${ct.id},'pcs',+this.value); markDirty()" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
       <td class="py-2"><button onclick="removeCarton(${ct.id})" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button></td>
     </tr>`).join('');
 }
 
-function addCartonType() {
-  cartonTypes.push({ id: cartonNextId++, name: 'New Carton', l: 50, w: 40, h: 30, pcs: 10 });
-  saveState(); buildCartonTable(); refreshAll();
-}
+function addCartonType() { cartonTypes.push({ id: cartonNextId++, name: 'New Carton', l: 50, w: 40, h: 30, pcs: 10 }); markDirty(); buildCartonTable(); refreshAll(); }
+function removeCarton(id) { if (cartonTypes.length <= 1) return; cartonTypes = cartonTypes.filter(ct => ct.id !== id); markDirty(); buildCartonTable(); refreshAll(); }
+function updateCarton(id, field, value) { const ct = cartonTypes.find(c => c.id === id); if (ct) ct[field] = value; markDirty(); saveState(); refreshAll(); }
 
-function removeCarton(id) {
-  if (cartonTypes.length <= 1) return;
-  cartonTypes = cartonTypes.filter(ct => ct.id !== id);
-  saveState(); buildCartonTable(); refreshAll();
-}
-
-function updateCarton(id, field, value) {
-  const ct = cartonTypes.find(c => c.id === id);
-  if (ct) ct[field] = value;
-  saveState(); refreshAll();
-}
-
-// ============================================================
-// PAGE 1: CATEGORIES
-// ============================================================
 function buildCategoryGrid() {
-  const grid = document.getElementById('categoryGrid');
-  if (!grid) return;
+  const el = document.getElementById('categoryGrid');
+  if (!el) return;
   const total = categories.reduce((s, c) => s + c.pct, 0);
-  grid.innerHTML = categories.map(c => `
+  const inbound = +document.getElementById('inboundVol')?.value || 0;
+  el.innerHTML = categories.map(c => `
     <div>
       <label class="block text-xs font-medium text-gray-600 mb-1">${c.name}</label>
       <div class="relative">
         <input type="number" value="${c.pct}" onchange="updateCategory('${c.id}',+this.value)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none pr-10" min="0" max="100">
         <span class="absolute right-3 top-2 text-xs text-gray-400">%</span>
       </div>
-      <p class="text-[10px] mt-0.5" id="catVol_${c.id}"></p>
+      <p class="text-[10px] mt-0.5">${Math.round(inbound * c.pct / 100).toLocaleString()} units/yr</p>
     </div>`).join('');
-
-  // Update total display
   const totalEl = document.getElementById('catTotal');
   totalEl.textContent = `Total: ${total}%`;
   totalEl.className = 'text-xs font-bold ' + (total === 100 ? 'pct-ok' : 'pct-warn');
-
-  // Update per-category volumes
-  const inbound = +document.getElementById('inboundVol')?.value || 0;
-  categories.forEach(c => {
-    const el = document.getElementById('catVol_' + c.id);
-    if (el) el.textContent = `${Math.round(inbound * c.pct / 100).toLocaleString()} units/yr`;
-  });
 }
 
 function updateCategory(id, value) {
   const c = categories.find(c => c.id === id);
   if (c) c.pct = Math.max(0, Math.min(100, value));
-  saveState(); buildCategoryGrid(); refreshAll();
+  markDirty(); saveState(); buildCategoryGrid(); refreshAll();
 }
 
 // ============================================================
-// PAGE 2: MINI DASHBOARD
+// PAGE 2: SHELF CAPACITY TABLE
+// ============================================================
+function buildShelfCapacity() {
+  const tbody = document.getElementById('shelfCapacityBody');
+  if (!tbody) return;
+  const shelfWcm = (+document.getElementById('shelfW')?.value || 2.4) * 100;
+  const shelfDcm = (+document.getElementById('shelfD')?.value || 1.2) * 100;
+  const shelvesPerRack = +document.getElementById('shelvesPerRack')?.value || 3;
+
+  tbody.innerHTML = cartonTypes.map((ct, i) => {
+    const fitW = Math.floor(shelfWcm / ct.w);
+    const fitD = Math.floor(shelfDcm / ct.l);
+    const perShelf = fitW * fitD;
+    const perRack = perShelf * shelvesPerRack;
+    return `<tr class="border-b border-gray-100 ${i%2===0?'bg-white':'bg-gray-50/50'}">
+      <td class="px-3 py-2 font-medium text-gray-800">${ct.name}</td>
+      <td class="px-3 py-2 text-gray-500">${ct.l}×${ct.w}×${ct.h}</td>
+      <td class="px-3 py-2">${ct.pcs}</td>
+      <td class="px-3 py-2 font-semibold text-indigo-700">${perShelf}</td>
+      <td class="px-3 py-2 font-semibold text-indigo-900">${perRack}</td>
+      <td class="px-3 py-2 text-xs text-gray-400">(${shelfWcm.toFixed(0)}÷${ct.w})=${fitW}W × (${shelfDcm.toFixed(0)}÷${ct.l})=${fitD}D</td>
+    </tr>`;
+  }).join('');
+
+  // Add a total row with weighted average
+  if (cartonTypes.length > 0 && currentPage === 2) {
+    const avgPerShelf = Math.round(cartonTypes.reduce((s,ct) => s + Math.floor(shelfWcm/ct.w)*Math.floor(shelfDcm/ct.l), 0) / cartonTypes.length);
+    const avgPerRack = avgPerShelf * shelvesPerRack;
+    const totalPcs = cartonTypes.reduce((s,ct) => s + ct.pcs, 0);
+    tbody.innerHTML += `<tr class="bg-indigo-50 font-medium">
+      <td class="px-3 py-2 text-indigo-800">AVERAGE</td>
+      <td class="px-3 py-2 text-indigo-600">—</td>
+      <td class="px-3 py-2 text-indigo-600">~${Math.round(totalPcs/cartonTypes.length)}</td>
+      <td class="px-3 py-2 text-indigo-800 font-bold">~${avgPerShelf}</td>
+      <td class="px-3 py-2 text-indigo-900 font-bold">~${avgPerRack}</td>
+      <td class="px-3 py-2 text-xs text-indigo-400">weighted avg</td>
+    </tr>`;
+  }
+}
+
+// ============================================================
+// PAGE 3: MINI DASHBOARD
 // ============================================================
 function buildMiniDashboard() {
   const el = document.getElementById('miniDashboard');
@@ -453,7 +522,11 @@ function buildMiniDashboard() {
   const opDays = +document.getElementById('opDays')?.value || 250;
   const shelvesPerRack = +document.getElementById('shelvesPerRack')?.value || 3;
 
-  // Average carton pcs (weighted or simple avg)
+  // Compute average cartons per shelf from all carton types
+  const shelfWcm = (+document.getElementById('shelfW')?.value || 2.4) * 100;
+  const shelfDcm = (+document.getElementById('shelfD')?.value || 1.2) * 100;
+  const avgCartonsPerShelf = cartonTypes.length > 0
+    ? cartonTypes.reduce((s, ct) => s + Math.floor(shelfWcm / ct.w) * Math.floor(shelfDcm / ct.l), 0) / cartonTypes.length : 1;
   const avgPcs = cartonTypes.length > 0 ? cartonTypes.reduce((s, ct) => s + ct.pcs, 0) / cartonTypes.length : 1;
 
   const dailyVol = Math.round(inbound / opDays);
@@ -461,74 +534,58 @@ function buildMiniDashboard() {
   const cartonsNeeded = Math.ceil(inventoryOnHand / avgPcs);
   const storageCells = grid.filter(cell => cell && STORAGE_ZONES.includes(cell)).length;
   const totalShelves = storageCells * shelvesPerRack;
-  const cartonsPerShelf = computeCartonsPerShelf();
-  const capacityCartons = totalShelves * cartonsPerShelf;
-
+  const capacityCartons = Math.round(totalShelves * avgCartonsPerShelf);
   const gap = capacityCartons - cartonsNeeded;
   const gapClass = gap >= 0 ? 'text-emerald-700' : 'text-red-600';
 
   el.innerHTML = `
     <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Daily Volume</p><p class="text-lg font-bold">${dailyVol.toLocaleString()}</p><p class="text-[10px] text-gray-400">units/day</p></div>
     <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Inventory on Hand</p><p class="text-lg font-bold">${inventoryOnHand.toLocaleString()}</p><p class="text-[10px] text-gray-400">${invDays}-day target</p></div>
-    <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Cartons Needed</p><p class="text-lg font-bold">${cartonsNeeded.toLocaleString()}</p><p class="text-[10px] text-gray-400">~${avgPcs.toFixed(0)} pcs/ctn</p></div>
+    <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Cartons Needed</p><p class="text-lg font-bold">${cartonsNeeded.toLocaleString()}</p><p class="text-[10px] text-gray-400">~${avgPcs.toFixed(0)} pcs/ctn avg</p></div>
     <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Capacity vs Need</p><p class="text-lg font-bold ${gapClass}">${gap >= 0 ? '+' : ''}${gap.toLocaleString()}</p><p class="text-[10px] text-gray-400">${capacityCartons.toLocaleString()} slots / ${cartonsNeeded.toLocaleString()} req</p></div>`;
 }
 
-function computeCartonsPerShelf() {
-  const shelfW = (+document.getElementById('shelfW')?.value || 2.4) * 100; // m to cm
-  const shelfD = (+document.getElementById('shelfD')?.value || 1.2) * 100;
-  if (cartonTypes.length === 0) return 1;
-  // Use the first carton type for now (or average)
-  const ct = cartonTypes[0];
-  return Math.floor(shelfW / ct.w) * Math.floor(shelfD / ct.l);
-}
-
 // ============================================================
-// PAGE 2: ZONE DIMENSIONS
+// PAGE 3: ZONE DIMENSIONS
 // ============================================================
 function buildZoneDims() {
   const el = document.getElementById('zoneDimsGrid');
   if (!el) return;
-  // Show only zones that are on the grid or all storage zones
-  const usedZones = [...new Set(grid.filter(Boolean))];
-  const showZones = ZONE_TYPES.filter(z => z.storage || usedZones.includes(z.id));
-
+  const showZones = ZONE_TYPES.filter(z => z.storage || grid.includes(z.id));
   el.innerHTML = showZones.map(z => {
     const dim = zoneDims[z.id] || { w: z.defW, d: z.defD };
     const cells = grid.filter(c => c === z.id).length;
     const areaSqm = cells * dim.w * dim.d;
-    const areaSqft = areaSqm * 10.764;
     return `<div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-      <div class="flex items-center gap-2 mb-2"><span>${z.icon}</span><span class="text-xs font-semibold text-gray-700">${z.name}</span><span class="text-[10px] text-gray-400">(${cells} cells)</span></div>
+      <div class="flex items-center gap-2 mb-2"><span>${z.icon}</span><span class="text-xs font-semibold">${z.name}</span><span class="text-[10px] text-gray-400">(${cells} cells)</span></div>
       <div class="grid grid-cols-2 gap-2 mb-1">
-        <div><label class="text-[10px] text-gray-400">Width (m)</label><input type="number" value="${dim.w}" onchange="updateZoneDim('${z.id}','w',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:ring-1 focus:ring-indigo-400 outline-none" min="0.1" step="0.1"></div>
-        <div><label class="text-[10px] text-gray-400">Depth (m)</label><input type="number" value="${dim.d}" onchange="updateZoneDim('${z.id}','d',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:ring-1 focus:ring-indigo-400 outline-none" min="0.1" step="0.1"></div>
+        <div><label class="text-[10px] text-gray-400">W (m)</label><input type="number" value="${dim.w}" onchange="updateZoneDim('${z.id}','w',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:ring-1 focus:ring-indigo-400 outline-none" min="0.1" step="0.1"></div>
+        <div><label class="text-[10px] text-gray-400">D (m)</label><input type="number" value="${dim.d}" onchange="updateZoneDim('${z.id}','d',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:ring-1 focus:ring-indigo-400 outline-none" min="0.1" step="0.1"></div>
       </div>
-      <p class="text-[10px] text-gray-500">Area: ${areaSqm.toFixed(1)} m² / ${Math.round(areaSqft).toLocaleString()} sqft</p>
+      <p class="text-[10px] text-gray-500">Area: ${areaSqm.toFixed(1)} m² / ${Math.round(areaSqm*10.764).toLocaleString()} sqft</p>
     </div>`;
   }).join('');
 }
 
 function updateZoneDim(zoneId, field, value) {
-  if (!zoneDims[zoneId]) zoneDims[zoneId] = { w: ZONE_TYPES.find(z=>z.id===zoneId)?.defW || 1, d: ZONE_TYPES.find(z=>z.id===zoneId)?.defD || 1 };
+  if (!zoneDims[zoneId]) zoneDims[zoneId] = { w: ZONE_TYPES.find(z=>z.id===zoneId)?.defW||1, d: ZONE_TYPES.find(z=>z.id===zoneId)?.defD||1 };
   zoneDims[zoneId][field] = value;
-  saveState(); buildZoneDims(); updatePL(); updateRentNote();
+  markDirty(); saveState(); buildZoneDims(); updatePL(); updateRentNote();
 }
 
-// Compute total sqft from zone dimensions (overrides for rent)
 function computeTotalSqft() {
   let total = 0;
   ZONE_TYPES.forEach(z => {
     const cells = grid.filter(c => c === z.id).length;
     if (cells === 0) return;
     const dim = zoneDims[z.id] || { w: z.defW, d: z.defD };
-    total += cells * dim.w * dim.d * 10.764; // m² to sqft
+    total += cells * dim.w * dim.d * 10.764;
   });
   return Math.round(total);
 }
 
 // ============================================================
-// PAGE 2: WAREHOUSE GRID (with drag-paint)
+// PAGE 3: WAREHOUSE GRID
 // ============================================================
 function buildPalette() {
   const palette = document.getElementById('zonePalette');
@@ -536,18 +593,11 @@ function buildPalette() {
     `<button onclick="selectZone('${z.id}')" data-zone="${z.id}"
        class="zone-legend px-3 py-2 rounded-lg border-2 text-xs font-medium cursor-pointer flex items-center gap-1.5"
        style="background:${z.color};border-color:${z.id===selectedZone?'#4f46e5':z.border}">
-       <span>${z.icon}</span> ${z.name}${z.storage?'<span class="text-[9px] opacity-50 ml-0.5">📐</span>':''}
+       <span>${z.icon}</span> ${z.name}${z.storage?'<span class="text-[9px] opacity-50">📐</span>':''}
     </button>`).join('');
 }
 
-function selectZone(id) {
-  selectedZone = id;
-  saveState();
-  document.querySelectorAll('#zonePalette button').forEach(b => {
-    const z = ZONE_TYPES.find(z => z.id === b.dataset.zone);
-    b.style.borderColor = b.dataset.zone === id ? '#4f46e5' : z.border;
-  });
-}
+function selectZone(id) { selectedZone = id; markDirty(); buildPalette(); }
 
 function buildGrid() {
   const gridEl = document.getElementById('warehouseGrid');
@@ -557,81 +607,41 @@ function buildGrid() {
     const cell = document.createElement('div');
     cell.className = 'grid-cell w-9 h-9 rounded cursor-pointer border border-gray-200';
     cell.dataset.index = i;
-    cell.title = `Cell ${i} — ${ZONE_TYPES.find(z=>z.id===selectedZone).name}`;
-    applyCellStyle(cell, i);
-
-    // Mouse events for drag-paint
+    if (grid[i]) { const z = ZONE_TYPES.find(z => z.id === grid[i]); cell.style.background = z.color; cell.style.borderColor = z.border; cell.textContent = z.icon; cell.style.fontSize = '11px'; cell.style.display = 'flex'; cell.style.alignItems = 'center'; cell.style.justifyContent = 'center'; }
     cell.addEventListener('mousedown', (e) => { e.preventDefault(); isPainting = true; paintedThisStroke = new Set(); paintCell(i); });
     cell.addEventListener('mouseenter', () => { if (isPainting) paintCell(i); });
     cell.addEventListener('mouseup', () => { isPainting = false; });
-    // Right-click erase
     cell.addEventListener('contextmenu', (e) => { e.preventDefault(); eraseCell(i); });
-
     gridEl.appendChild(cell);
   }
-  // Global mouseup to stop painting even if released outside grid
   document.addEventListener('mouseup', () => { isPainting = false; });
   updateZoneSummary();
 }
 
-function applyCellStyle(cell, i) {
-  cell.style.background = '';
-  cell.style.borderColor = '';
-  cell.textContent = '';
-  if (grid[i]) {
-    const z = ZONE_TYPES.find(z => z.id === grid[i]);
-    cell.style.background = z.color;
-    cell.style.borderColor = z.border;
-    cell.textContent = z.icon;
-    cell.style.fontSize = '11px';
-    cell.style.display = 'flex';
-    cell.style.alignItems = 'center';
-    cell.style.justifyContent = 'center';
-  }
-}
-
 function paintCell(i) {
-  if (paintedThisStroke.has(i)) return; // don't repaint same cell in one stroke
+  if (paintedThisStroke.has(i)) return;
   paintedThisStroke.add(i);
   grid[i] = selectedZone;
   const cell = document.querySelector(`[data-index="${i}"]`);
-  if (cell) applyCellStyle(cell, i);
+  if (cell) { const z = ZONE_TYPES.find(z => z.id === grid[i]); cell.style.background = z.color; cell.style.borderColor = z.border; cell.textContent = z.icon; cell.style.fontSize = '11px'; cell.style.display = 'flex'; cell.style.alignItems = 'center'; cell.style.justifyContent = 'center'; }
   updateZoneSummary();
 }
 
-function eraseCell(i) {
-  grid[i] = null;
-  const cell = document.querySelector(`[data-index="${i}"]`);
-  if (cell) applyCellStyle(cell, i);
-  saveState(); updateZoneSummary(); buildMiniDashboard(); buildZoneDims();
-  if (currentPage === 3) { buildActivityTable(); updatePL(); updateRentNote(); }
-}
+function eraseCell(i) { grid[i] = null; const cell = document.querySelector(`[data-index="${i}"]`); if (cell) { cell.style.background = ''; cell.style.borderColor = ''; cell.textContent = ''; } markDirty(); saveState(); updateZoneSummary(); buildMiniDashboard(); buildZoneDims(); }
 
-function placeZone(i) { grid[i] = selectedZone; saveState(); buildGrid(); }
-function resetGrid() { grid = Array(GRID_ROWS * GRID_COLS).fill(null); saveState(); buildGrid(); buildMiniDashboard(); buildZoneDims(); }
+function resetGrid() { grid = Array(GRID_ROWS * GRID_COLS).fill(null); markDirty(); saveState(); buildGrid(); buildMiniDashboard(); buildZoneDims(); }
 
 function updateZoneSummary() {
-  const counts = {};
-  ZONE_TYPES.forEach(z => counts[z.id] = 0);
-  grid.forEach(cell => { if (cell) counts[cell] = (counts[cell] || 0) + 1; });
-  const totalCells = Object.values(counts).reduce((a, b) => a + b, 0);
-  const totalSqft = totalCells * CELL_SQFT;
-
-  const summaryEl = document.getElementById('zoneSummary');
-  if (!summaryEl) return;
-  summaryEl.innerHTML = `<span class="font-semibold">Used: ${(totalCells*CELL_SQFT).toLocaleString()} sqft</span>` +
-    ZONE_TYPES.filter(z => counts[z.id] > 0).map(z =>
-    `<span style="display:inline-flex;align-items:center;gap:4px">
-       <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${z.color};border:1px solid ${z.border}"></span>
-       ${z.name}: ${counts[z.id]} cells
-    </span>`).join('');
-  saveState();
-  buildMiniDashboard();
-  buildZoneDims();
+  const counts = {}; ZONE_TYPES.forEach(z => counts[z.id] = 0);
+  grid.forEach(cell => { if (cell) counts[cell] = (counts[cell]||0)+1; });
+  const totalCells = Object.values(counts).reduce((a,b)=>a+b,0);
+  const el = document.getElementById('zoneSummary');
+  if (el) el.innerHTML = `<span class="font-semibold">Used: ${totalCells} cells</span>` + ZONE_TYPES.filter(z=>counts[z.id]>0).map(z => `<span style="display:inline-flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${z.color};border:1px solid ${z.border}"></span>${z.name}: ${counts[z.id]}</span>`).join('');
+  markDirty(); saveState(); buildMiniDashboard(); buildZoneDims();
 }
 
 // ============================================================
-// PAGE 3: ACTIVITIES
+// PAGE 4: ACTIVITIES + P&L
 // ============================================================
 function buildActivityTable() {
   const tbody = document.getElementById('activityBody');
@@ -642,14 +652,14 @@ function buildActivityTable() {
     const headcount = opDays > 0 ? Math.ceil(hoursNeeded / (opDays * 8)) : 0;
     const laborCost = hoursNeeded * a.laborRate;
     const billedRev = laborCost * (1 + a.margin / 100);
-    return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+    return `<tr class="border-b border-gray-100 hover:bg-gray-50">
       <td class="py-2 pr-3"><input type="text" value="${a.name.replace(/"/g,'&quot;')}" onchange="updateActivity(${a.id},'name',this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none"></td>
       <td class="py-2 pr-3"><input type="number" value="${a.volume}" onchange="updateActivity(${a.id},'volume',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0"></td>
       <td class="py-2 pr-3"><input type="number" value="${a.uph}" onchange="updateActivity(${a.id},'uph',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="1"></td>
       <td class="py-2 pr-3"><input type="number" value="${a.laborRate}" onchange="updateActivity(${a.id},'laborRate',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0" step="0.5"></td>
       <td class="py-2 pr-3"><input type="number" value="${a.margin}" onchange="updateActivity(${a.id},'margin',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-indigo-400 outline-none" min="0" max="100" step="0.5"></td>
-      <td class="py-2 pr-3 text-sm font-medium text-gray-700">${headcount.toLocaleString()}</td>
-      <td class="py-2 pr-3 text-sm font-medium text-gray-700">HK$${Math.round(laborCost).toLocaleString()}</td>
+      <td class="py-2 pr-3 text-sm font-medium">${headcount.toLocaleString()}</td>
+      <td class="py-2 pr-3 text-sm font-medium">HK$${Math.round(laborCost).toLocaleString()}</td>
       <td class="py-2 pr-3 text-sm font-medium text-emerald-700">HK$${Math.round(billedRev).toLocaleString()}</td>
       <td class="py-2"><button onclick="removeActivity(${a.id})" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button></td>
     </tr>`;
@@ -657,17 +667,13 @@ function buildActivityTable() {
   updatePL();
 }
 
-function addActivity() { activities.push({ id: activityNextId++, name: 'New Activity', volume: 0, uph: 1, laborRate: 85, margin: 15 }); saveState(); buildActivityTable(); }
-function removeActivity(id) { activities = activities.filter(a => a.id !== id); saveState(); buildActivityTable(); }
-function updateActivity(id, field, value) { const a = activities.find(a => a.id === id); if (a) a[field] = value; saveState(); buildActivityTable(); }
+function addActivity() { activities.push({ id: activityNextId++, name: 'New Activity', volume: 0, uph: 1, laborRate: 85, margin: 15 }); markDirty(); saveState(); buildActivityTable(); }
+function removeActivity(id) { activities = activities.filter(a => a.id !== id); markDirty(); saveState(); buildActivityTable(); }
+function updateActivity(id, field, value) { const a = activities.find(a => a.id === id); if (a) a[field] = value; markDirty(); saveState(); buildActivityTable(); }
 
-// ============================================================
-// P&L
-// ============================================================
 function updatePL() {
   const elLabor = document.getElementById('plLaborCost');
   if (!elLabor) return;
-
   let totalLaborCost = 0, totalBilledRev = 0;
   activities.forEach(a => {
     const hours = a.uph > 0 ? a.volume / a.uph : 0;
@@ -675,7 +681,6 @@ function updatePL() {
     totalLaborCost += cost;
     totalBilledRev += cost * (1 + a.margin / 100);
   });
-
   const totalSqft = computeTotalSqft();
   const rent = (+document.getElementById('rentPerSqft')?.value || 0) * totalSqft * 12;
   const mhe = (+document.getElementById('mheLeasing')?.value || 0) * 12;
@@ -702,7 +707,7 @@ function updateRentNote() {
   if (!el) return;
   const totalSqft = computeTotalSqft();
   const rate = +document.getElementById('rentPerSqft')?.value || 0;
-  el.textContent = `Annual: HK$${(rate * totalSqft * 12).toLocaleString()} (${totalSqft.toLocaleString()} sqft × HK$${rate}/mo)`;
+  el.textContent = `Annual: HK$${(rate*totalSqft*12).toLocaleString()} (${totalSqft.toLocaleString()} sqft × HK$${rate}/mo)`;
 }
 
 // ============================================================
@@ -714,87 +719,54 @@ function exportExcel() {
   const totalSqft = computeTotalSqft();
   const opDays = +document.getElementById('opDays')?.value || 250;
 
-  // Tab 1: Setup + Cartons + Categories
-  const setup = {
-    'Tender Name': document.getElementById('tenderName')?.value || '',
-    Client: document.getElementById('clientName')?.value || '',
-    'Op Days/Year': opDays,
-    'Contract Years': +document.getElementById('contractYears')?.value || 3,
-    'Inbound Vol': +document.getElementById('inboundVol')?.value || 0,
-    'Outbound Vol': +document.getElementById('outboundVol')?.value || 0,
-    'SKU Count': +document.getElementById('skuCount')?.value || 0,
-    'Inv Days Target': +document.getElementById('invDays')?.value || 30,
-  };
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([setup]), 'Tender Setup');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cartonTypes.map(ct => ({ Name: ct.name, 'L (cm)': ct.l, 'W (cm)': ct.w, 'H (cm)': ct.h, 'Pcs/Carton': ct.pcs }))), 'Carton Types');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(categories.map(c => ({ Category: c.name, '%': c.pct, 'Units/Yr': Math.round((+document.getElementById('inboundVol')?.value||0)*c.pct/100) }))), 'Categories');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{
+    'Tender Name': document.getElementById('tenderName')?.value||'', Client: document.getElementById('clientName')?.value||'',
+    'Op Days': opDays, 'Contract Yrs': +document.getElementById('contractYears')?.value||3,
+    'Inbound': +document.getElementById('inboundVol')?.value||0, 'Outbound': +document.getElementById('outboundVol')?.value||0,
+    SKUs: +document.getElementById('skuCount')?.value||0, 'Inv Days': +document.getElementById('invDays')?.value||30,
+  }]), 'Tender Setup');
 
-  // Tab 2: Floorplan
-  const zoneCounts = {};
-  ZONE_TYPES.forEach(z => zoneCounts[z.name] = 0);
-  grid.forEach(cell => { if (cell) { const z = ZONE_TYPES.find(z => z.id === cell); zoneCounts[z.name]++; } });
-  const fp = Object.entries(zoneCounts).filter(([,v]) => v > 0).map(([k,v]) => {
-    const z = ZONE_TYPES.find(z => z.name === k);
-    const dim = zoneDims[z.id] || { w: z.defW, d: z.defD };
-    return { Zone: k, Cells: v, 'W (m)': dim.w, 'D (m)': dim.d, 'Area m²': +(v*dim.w*dim.d).toFixed(1), 'Area sqft': Math.round(v*dim.w*dim.d*10.764) };
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cartonTypes.map(ct=>({Name:ct.name,'L cm':ct.l,'W cm':ct.w,'H cm':ct.h,'Pcs/Ctn':ct.pcs}))), 'Carton Types');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(categories.map(c=>({Category:c.name,'%':c.pct,Units:Math.round((+document.getElementById('inboundVol')?.value||0)*c.pct/100)}))), 'Categories');
+
+  // Shelf capacity
+  const shelfWcm = (+document.getElementById('shelfW')?.value||2.4)*100;
+  const shelfDcm = (+document.getElementById('shelfD')?.value||1.2)*100;
+  const spr = +document.getElementById('shelvesPerRack')?.value||3;
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cartonTypes.map(ct=>{
+    const ps = Math.floor(shelfWcm/ct.w)*Math.floor(shelfDcm/ct.l);
+    return {Carton:ct.name,'L cm':ct.l,'W cm':ct.w,PerShelf:ps,PerRack:ps*spr};
+  })), 'Shelf Capacity');
+
+  // Floorplan
+  const zc = {}; ZONE_TYPES.forEach(z=>zc[z.name]=0);
+  grid.forEach(c=>{if(c){const z=ZONE_TYPES.find(z=>z.id===c);zc[z.name]++;}});
+  const fp = Object.entries(zc).filter(([,v])=>v>0).map(([k,v])=>{
+    const z=ZONE_TYPES.find(z=>z.name===k); const dim=zoneDims[z.id]||{w:z.defW,d:z.defD};
+    return {Zone:k,Cells:v,'W m':dim.w,'D m':dim.d,'m²':+(v*dim.w*dim.d).toFixed(1),sqft:Math.round(v*dim.w*dim.d*10.764)};
   });
-  const totalCells = grid.filter(Boolean).length;
-  fp.push({ Zone: 'TOTAL', Cells: totalCells, 'W (m)': '', 'D (m)': '', 'Area m²': '', 'Area sqft': totalSqft });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fp), 'Floorplan');
 
-  // Tab 3: Activities
-  const actData = activities.map(a => {
-    const hours = a.uph > 0 ? a.volume / a.uph : 0;
-    const hc = opDays > 0 ? Math.ceil(hours / (opDays * 8)) : 0;
-    const cost = hours * a.laborRate;
-    return { Activity: a.name, Volume: a.volume, UPH: a.uph, 'Labor Rate': a.laborRate, 'Margin %': a.margin, Headcount: hc, 'Labor Cost': Math.round(cost), 'Billed Rev': Math.round(cost*(1+a.margin/100)) };
-  });
+  // Activities + P&L
+  const actData = activities.map(a=>{const h=a.uph>0?a.volume/a.uph:0;const hc=opDays>0?Math.ceil(h/(opDays*8)):0;const c=h*a.laborRate;return{Activity:a.name,Volume:a.volume,UPH:a.uph,'Labor HK$':a.laborRate,'Margin %':a.margin,Headcount:hc,'Labor Cost':Math.round(c),'Billed Rev':Math.round(c*(1+a.margin/100))};});
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(actData), 'Activities');
 
-  // Tab 4: Overheads
-  const ovh = [
-    { Item: 'Rent', Monthly: +document.getElementById('rentPerSqft')?.value || 0, Annual: ((+document.getElementById('rentPerSqft')?.value || 0) * totalSqft * 12) },
-    { Item: 'MHE', Monthly: +document.getElementById('mheLeasing')?.value || 0, Annual: (+document.getElementById('mheLeasing')?.value || 0) * 12 },
-    { Item: 'IT & WMS', Monthly: +document.getElementById('itWms')?.value || 0, Annual: (+document.getElementById('itWms')?.value || 0) * 12 },
-    { Item: 'Packaging', Monthly: '', Annual: +document.getElementById('packaging')?.value || 0 },
-    { Item: 'Utilities', Monthly: +document.getElementById('utilities')?.value || 0, Annual: (+document.getElementById('utilities')?.value || 0) * 12 },
-    { Item: 'Security', Monthly: +document.getElementById('security')?.value || 0, Annual: (+document.getElementById('security')?.value || 0) * 12 },
-    { Item: 'Insurance', Monthly: '', Annual: +document.getElementById('insurance')?.value || 0 },
-    { Item: 'Other', Monthly: '', Annual: +document.getElementById('otherFixed')?.value || 0 },
-  ];
+  const tLabor=actData.reduce((s,a)=>s+a['Labor Cost'],0), tRev=actData.reduce((s,a)=>s+a['Billed Rev'],0);
+  const ovh=[{Item:'Rent',Annual:((+document.getElementById('rentPerSqft')?.value||0)*totalSqft*12)},{Item:'MHE',Annual:(+document.getElementById('mheLeasing')?.value||0)*12},{Item:'IT & WMS',Annual:(+document.getElementById('itWms')?.value||0)*12},{Item:'Packaging',Annual:+document.getElementById('packaging')?.value||0},{Item:'Utilities',Annual:(+document.getElementById('utilities')?.value||0)*12},{Item:'Security',Annual:(+document.getElementById('security')?.value||0)*12},{Item:'Insurance',Annual:+document.getElementById('insurance')?.value||0},{Item:'Other',Annual:+document.getElementById('otherFixed')?.value||0}];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ovh), 'Overheads');
+  const tOvh=ovh.reduce((s,o)=>s+o.Annual,0), tCost=tLabor+tOvh, prof=tRev-tCost;
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Item:'Total Labor',Amount:Math.round(tLabor)},{Item:'Total Overheads',Amount:Math.round(tOvh)},{Item:'Total Cost',Amount:Math.round(tCost)},{Item:'Target Revenue',Amount:Math.round(tRev)},{Item:'Projected Profit',Amount:Math.round(prof)},{Item:'Profit Margin',Amount:tRev>0?(prof/tRev*100).toFixed(1)+'%':'0.0%'}]), 'P&L');
 
-  // Tab 5: P&L
-  const tLabor = actData.reduce((s,a) => s + a['Labor Cost'], 0);
-  const tRev = actData.reduce((s,a) => s + a['Billed Rev'], 0);
-  const tOvh = ovh.reduce((s,o) => s + o.Annual, 0);
-  const tCost = tLabor + tOvh; const prof = tRev - tCost;
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([
-    { Item: 'Total Labor Cost', Amount: Math.round(tLabor) },
-    { Item: 'Total Overheads', Amount: Math.round(tOvh) },
-    { Item: 'Total Cost', Amount: Math.round(tCost) },
-    { Item: 'Target Revenue', Amount: Math.round(tRev) },
-    { Item: 'Projected Profit', Amount: Math.round(prof) },
-    { Item: 'Profit Margin', Amount: tRev>0?(prof/tRev*100).toFixed(1)+'%':'0.0%' },
-  ]), 'P&L');
-
-  const name = document.getElementById('tenderName')?.value || 'tender-proposal';
-  XLSX.writeFile(wb, `${name.replace(/[^a-z0-9]/gi, '-')}.xlsx`);
+  XLSX.writeFile(wb, `${(document.getElementById('tenderName')?.value||'tender').replace(/[^a-z0-9]/gi,'-')}.xlsx`);
 }
 
 // ============================================================
 // INIT
 // ============================================================
 loadState();
-buildCartonTable();
-buildCategoryGrid();
-buildPalette();
-buildGrid();
-buildMiniDashboard();
-buildZoneDims();
-buildActivityTable();
-updatePL();
-updateRentNote();
+buildCartonTable(); buildCategoryGrid(); buildShelfCapacity();
+buildPalette(); buildGrid(); buildMiniDashboard(); buildZoneDims();
+buildActivityTable(); updatePL(); updateRentNote();
 </script>
 </body>
 </html>
