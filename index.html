@@ -7,8 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', system-ui, sans-serif; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     .grid-cell { transition: background-color 0.08s ease; user-select: none; }
     .grid-cell:hover { filter: brightness(0.92); }
     .module-card { transition: box-shadow 0.2s ease; }
@@ -182,8 +181,11 @@
         <!-- Grid -->
         <div>
           <div class="flex items-center justify-between mb-3">
-            <p class="text-sm text-gray-500">Click &amp; drag to paint zones. Right-click to erase. Each cell ≈ 80 sqft.</p>
-            <button onclick="resetGrid()" class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Reset Grid</button>
+            <p class="text-sm text-gray-500" id="cellAreaLabel">Click & drag to paint zones. Right-click to erase.</p>
+            <div class="flex gap-2">
+              <button onclick="autoFillRacks()" class="px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors" title="Auto-fill required number of racking cells">Auto-Fill Racks</button>
+              <button onclick="resetGrid()" class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Reset Grid</button>
+            </div>
           </div>
           <div class="flex flex-wrap gap-2 mb-3" id="zonePalette"></div>
           <div class="overflow-auto border border-gray-200 rounded-lg bg-gray-100 p-4">
@@ -300,14 +302,14 @@ const LS_KEY = 'tender_planner_v2';
 const TOTAL_PAGES = 4;
 
 const ZONE_TYPES = [
-  { id: 'racking',   name: 'Standard Racking',  color: '#dbeafe', border: '#93c5fd', icon: '📦', storage: true,  defW: 2.4, defD: 1.2 },
-  { id: 'bulk',      name: 'Bulk Storage',       color: '#fef3c7', border: '#fbbf24', icon: '🏗️', storage: true,  defW: 3.0, defD: 2.0 },
-  { id: 'cage',      name: 'High-Value Cage',    color: '#fce7f3', border: '#f472b6', icon: '🔒', storage: true,  defW: 1.2, defD: 1.2 },
-  { id: 'corridor',  name: 'Corridor / Aisle',   color: '#e5e7eb', border: '#d1d5db', icon: '⬌',  storage: false, defW: 0,   defD: 0 },
-  { id: 'vas',       name: 'VAS Area',           color: '#d1fae5', border: '#6ee7b7', icon: '🔧', storage: false, defW: 5.0, defD: 5.0 },
-  { id: 'inbound',   name: 'Inbound Staging',    color: '#ede9fe', border: '#a78bfa', icon: '📥', storage: false, defW: 6.0, defD: 4.0 },
-  { id: 'outbound',  name: 'Outbound Staging',   color: '#e0e7ff', border: '#818cf8', icon: '📤', storage: false, defW: 6.0, defD: 4.0 },
-  { id: 'office',    name: 'Office / Amenities',  color: '#f3f4f6', border: '#9ca3af', icon: '🪑', storage: false, defW: 4.0, defD: 3.0 },
+  { id: 'racking',   name: 'Standard Racking',  color: '#dbeafe', border: '#93c5fd', label: 'RK', storage: true,  defW: 2.4, defD: 1.2 },
+  { id: 'bulk',      name: 'Bulk Storage',       color: '#fef3c7', border: '#fbbf24', label: 'BK', storage: true,  defW: 3.0, defD: 2.0 },
+  { id: 'cage',      name: 'High-Value Cage',    color: '#fce7f3', border: '#f472b6', label: 'CG', storage: true,  defW: 1.2, defD: 1.2 },
+  { id: 'corridor',  name: 'Corridor / Aisle',   color: '#e5e7eb', border: '#d1d5db', label: '//', storage: false, defW: 0,   defD: 0 },
+  { id: 'vas',       name: 'VAS Area',           color: '#d1fae5', border: '#6ee7b7', label: 'VS', storage: false, defW: 5.0, defD: 5.0 },
+  { id: 'inbound',   name: 'Inbound Staging',    color: '#ede9fe', border: '#a78bfa', label: 'IN', storage: false, defW: 6.0, defD: 4.0 },
+  { id: 'outbound',  name: 'Outbound Staging',   color: '#e0e7ff', border: '#818cf8', label: 'OUT',storage: false, defW: 6.0, defD: 4.0 },
+  { id: 'office',    name: 'Office / Amenities',  color: '#f3f4f6', border: '#9ca3af', label: 'OF', storage: false, defW: 4.0, defD: 3.0 },
 ];
 
 let cartonTypes = [
@@ -522,7 +524,6 @@ function buildMiniDashboard() {
   const opDays = +document.getElementById('opDays')?.value || 250;
   const shelvesPerRack = +document.getElementById('shelvesPerRack')?.value || 3;
 
-  // Compute average cartons per shelf from all carton types
   const shelfWcm = (+document.getElementById('shelfW')?.value || 2.4) * 100;
   const shelfDcm = (+document.getElementById('shelfD')?.value || 1.2) * 100;
   const avgCartonsPerShelf = cartonTypes.length > 0
@@ -532,17 +533,29 @@ function buildMiniDashboard() {
   const dailyVol = Math.round(inbound / opDays);
   const inventoryOnHand = Math.round(dailyVol * invDays);
   const cartonsNeeded = Math.ceil(inventoryOnHand / avgPcs);
+  
+  // Count painted storage cells
   const storageCells = grid.filter(cell => cell && STORAGE_ZONES.includes(cell)).length;
   const totalShelves = storageCells * shelvesPerRack;
   const capacityCartons = Math.round(totalShelves * avgCartonsPerShelf);
+  
+  // Required cells: how many racking cells needed
+  const cartonsPerRack = avgCartonsPerShelf * shelvesPerRack;
+  const requiredRacks = cartonsPerRack > 0 ? Math.ceil(cartonsNeeded / cartonsPerRack) : 0;
   const gap = capacityCartons - cartonsNeeded;
   const gapClass = gap >= 0 ? 'text-emerald-700' : 'text-red-600';
+  
+  // Per-cell area based on selected zone type
+  const selZone = ZONE_TYPES.find(z => z.id === selectedZone);
+  const cellSqft = selZone ? Math.round(selZone.defW * selZone.defD * 10.764) : 31;
 
   el.innerHTML = `
     <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Daily Volume</p><p class="text-lg font-bold">${dailyVol.toLocaleString()}</p><p class="text-[10px] text-gray-400">units/day</p></div>
     <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Inventory on Hand</p><p class="text-lg font-bold">${inventoryOnHand.toLocaleString()}</p><p class="text-[10px] text-gray-400">${invDays}-day target</p></div>
     <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Cartons Needed</p><p class="text-lg font-bold">${cartonsNeeded.toLocaleString()}</p><p class="text-[10px] text-gray-400">~${avgPcs.toFixed(0)} pcs/ctn avg</p></div>
-    <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Capacity vs Need</p><p class="text-lg font-bold ${gapClass}">${gap >= 0 ? '+' : ''}${gap.toLocaleString()}</p><p class="text-[10px] text-gray-400">${capacityCartons.toLocaleString()} slots / ${cartonsNeeded.toLocaleString()} req</p></div>`;
+    <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Racking Cells Needed</p><p class="text-lg font-bold text-indigo-700">${requiredRacks}</p><p class="text-[10px] text-gray-400">${cartonsPerRack.toFixed(0)} ctn/rack @ ${shelvesPerRack} shelves</p></div>
+    <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Current Capacity</p><p class="text-lg font-bold ${gapClass}">${capacityCartons.toLocaleString()} slots</p><p class="text-[10px] text-gray-400">${storageCells} racks painted</p></div>
+    <div class="bg-white rounded-lg p-3"><p class="text-[10px] text-gray-400 mb-0.5">Gap</p><p class="text-lg font-bold ${gap >= 0 ? 'text-emerald-700' : 'text-red-600'}">${gap >= 0 ? '+' : ''}${gap.toLocaleString()}</p><p class="text-[10px] text-gray-400">${gap >= 0 ? 'surplus' : 'shortfall'} cartons</p></div>`;
 }
 
 // ============================================================
@@ -557,7 +570,7 @@ function buildZoneDims() {
     const cells = grid.filter(c => c === z.id).length;
     const areaSqm = cells * dim.w * dim.d;
     return `<div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-      <div class="flex items-center gap-2 mb-2"><span>${z.icon}</span><span class="text-xs font-semibold">${z.name}</span><span class="text-[10px] text-gray-400">(${cells} cells)</span></div>
+      <div class="flex items-center gap-2 mb-2"><span class="text-[10px] font-bold opacity-50">${z.label}</span><span class="text-xs font-semibold">${z.name}</span><span class="text-[10px] text-gray-400">(${cells} cells)</span></div>
       <div class="grid grid-cols-2 gap-2 mb-1">
         <div><label class="text-[10px] text-gray-400">W (m)</label><input type="number" value="${dim.w}" onchange="updateZoneDim('${z.id}','w',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:ring-1 focus:ring-indigo-400 outline-none" min="0.1" step="0.1"></div>
         <div><label class="text-[10px] text-gray-400">D (m)</label><input type="number" value="${dim.d}" onchange="updateZoneDim('${z.id}','d',+this.value)" class="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:ring-1 focus:ring-indigo-400 outline-none" min="0.1" step="0.1"></div>
@@ -593,7 +606,7 @@ function buildPalette() {
     `<button onclick="selectZone('${z.id}')" data-zone="${z.id}"
        class="zone-legend px-3 py-2 rounded-lg border-2 text-xs font-medium cursor-pointer flex items-center gap-1.5"
        style="background:${z.color};border-color:${z.id===selectedZone?'#4f46e5':z.border}">
-       <span>${z.icon}</span> ${z.name}${z.storage?'<span class="text-[9px] opacity-50">📐</span>':''}
+       <span style="font-size:10px;font-weight:700;opacity:0.5">${z.label}</span> ${z.name}${z.storage?'<span class="text-[9px] opacity-50">[sqm]</span>':''}
     </button>`).join('');
 }
 
@@ -607,7 +620,7 @@ function buildGrid() {
     const cell = document.createElement('div');
     cell.className = 'grid-cell w-9 h-9 rounded cursor-pointer border border-gray-200';
     cell.dataset.index = i;
-    if (grid[i]) { const z = ZONE_TYPES.find(z => z.id === grid[i]); cell.style.background = z.color; cell.style.borderColor = z.border; cell.textContent = z.icon; cell.style.fontSize = '11px'; cell.style.display = 'flex'; cell.style.alignItems = 'center'; cell.style.justifyContent = 'center'; }
+    if (grid[i]) { const z = ZONE_TYPES.find(z => z.id === grid[i]); cell.style.background = z.color; cell.style.borderColor = z.border; cell.textContent = z.label; cell.style.fontSize = '9px'; cell.style.fontWeight = '700'; cell.style.display = 'flex'; cell.style.alignItems = 'center'; cell.style.justifyContent = 'center'; }
     cell.addEventListener('mousedown', (e) => { e.preventDefault(); isPainting = true; paintedThisStroke = new Set(); paintCell(i); });
     cell.addEventListener('mouseenter', () => { if (isPainting) paintCell(i); });
     cell.addEventListener('mouseup', () => { isPainting = false; });
@@ -616,6 +629,11 @@ function buildGrid() {
   }
   document.addEventListener('mouseup', () => { isPainting = false; });
   updateZoneSummary();
+  // Update cell area label
+  const sel = ZONE_TYPES.find(z => z.id === selectedZone);
+  const areaSqft = sel && sel.defW > 0 ? Math.round(sel.defW * sel.defD * 10.764) : '—';
+  const lbl = document.getElementById('cellAreaLabel');
+  if (lbl) lbl.textContent = `Click & drag to paint. Right-click to erase. 1 ${sel ? sel.name : ''} cell = ~${areaSqft} sqft.`;
 }
 
 function paintCell(i) {
@@ -623,13 +641,42 @@ function paintCell(i) {
   paintedThisStroke.add(i);
   grid[i] = selectedZone;
   const cell = document.querySelector(`[data-index="${i}"]`);
-  if (cell) { const z = ZONE_TYPES.find(z => z.id === grid[i]); cell.style.background = z.color; cell.style.borderColor = z.border; cell.textContent = z.icon; cell.style.fontSize = '11px'; cell.style.display = 'flex'; cell.style.alignItems = 'center'; cell.style.justifyContent = 'center'; }
+  if (cell) { const z = ZONE_TYPES.find(z => z.id === grid[i]); cell.style.background = z.color; cell.style.borderColor = z.border; cell.textContent = z.label; cell.style.fontSize = '9px'; cell.style.fontWeight = '700'; cell.style.display = 'flex'; cell.style.alignItems = 'center'; cell.style.justifyContent = 'center'; }
   updateZoneSummary();
 }
 
 function eraseCell(i) { grid[i] = null; const cell = document.querySelector(`[data-index="${i}"]`); if (cell) { cell.style.background = ''; cell.style.borderColor = ''; cell.textContent = ''; } markDirty(); saveState(); updateZoneSummary(); buildMiniDashboard(); buildZoneDims(); }
 
 function resetGrid() { grid = Array(GRID_ROWS * GRID_COLS).fill(null); markDirty(); saveState(); buildGrid(); buildMiniDashboard(); buildZoneDims(); }
+
+function autoFillRacks() {
+  const inbound = +document.getElementById('inboundVol')?.value || 0;
+  const invDays = +document.getElementById('invDays')?.value || 30;
+  const opDays = +document.getElementById('opDays')?.value || 250;
+  const shelvesPerRack = +document.getElementById('shelvesPerRack')?.value || 3;
+  const shelfWcm = (+document.getElementById('shelfW')?.value || 2.4) * 100;
+  const shelfDcm = (+document.getElementById('shelfD')?.value || 1.2) * 100;
+  const avgCartonsPerShelf = cartonTypes.length > 0
+    ? cartonTypes.reduce((s, ct) => s + Math.floor(shelfWcm / ct.w) * Math.floor(shelfDcm / ct.l), 0) / cartonTypes.length : 1;
+  const avgPcs = cartonTypes.length > 0 ? cartonTypes.reduce((s, ct) => s + ct.pcs, 0) / cartonTypes.length : 1;
+  const cartonsPerRack = avgCartonsPerShelf * shelvesPerRack;
+  const dailyVol = Math.round(inbound / opDays);
+  const cartonsNeeded = Math.ceil(dailyVol * invDays / avgPcs);
+  const racksNeeded = cartonsPerRack > 0 ? Math.ceil(cartonsNeeded / cartonsPerRack) : 0;
+  if (racksNeeded <= 0) return;
+  
+  // Fill grid left-to-right, top-to-bottom with racking + corridors every 4 racks
+  grid = Array(GRID_ROWS * GRID_COLS).fill(null);
+  let placed = 0;
+  for (let i = 0; i < GRID_ROWS * GRID_COLS && placed < racksNeeded; i++) {
+    const col = i % GRID_COLS;
+    // Every 5th column is a corridor
+    if ((col + 1) % 5 === 0) { grid[i] = 'corridor'; continue; }
+    grid[i] = 'racking';
+    placed++;
+  }
+  markDirty(); saveState(); buildGrid(); buildMiniDashboard(); buildZoneDims();
+}
 
 function updateZoneSummary() {
   const counts = {}; ZONE_TYPES.forEach(z => counts[z.id] = 0);
